@@ -16,7 +16,7 @@ import {
 //import  {Link} from 'react-router-dom';
 
 import Constants from './constants';
-import {letters} from './constants/messages';
+import { letters } from './constants/messages';
 import Header from './components/header'
 import Chat from './components/chat'
 import MyBoard from './components/my_board'
@@ -46,17 +46,18 @@ const initializeAssistant = (getState: any) => {
 };
 
 export const App: FC = memo(() => {
+
   const [appState, dispatch] = useReducer(reducer, { notes: [] });
 
   const [note, setNote] = useState("");
 
   const [gameOver, setGameOver] = useState(false);
 
-  let initial_myField = [];
+  let initial_myField = Array(0);
   let myShips = placeVarious();
 
-  let initial_enemyField = [];
-  let initial_enemyShips = placeVarious();
+  let initial_enemyField = Array(0);
+  let enemyShips = placeVarious();
 
 
   // первоначальное (пустое) состояние поля
@@ -66,8 +67,8 @@ export const App: FC = memo(() => {
   //}
 
   for (let i = 0; i < 10; i++) {
-    let val_in_line=[];
-    let enemy_val_in_line=[];
+    let val_in_line = [];
+    let enemy_val_in_line = [];
 
     for (let j = 0; j < 10; j++) {
       val_in_line.push({
@@ -93,43 +94,54 @@ export const App: FC = memo(() => {
     initial_enemyField.push(enemy_val_in_line);
   }
 
-  let my_grid=[];
-  let enemy_grid=[];
+    // расставляем стандартный набор кораблей
+    myShips.forEach((ship: any) => {
+      placeShip(initial_myField, ship)
+    });
+    enemyShips.forEach((ship0: any) => {
+      placeShip(initial_enemyField, ship0)
+    });
 
-    // Заполняем из наших массивов
-    let remaining_hit_points=0;
-    for (let y = 0; y < 10; y++) {
-      let my_line=[];
-      let enemy_line=[];
-      for (let x = 0; x < 10; x++) {
-        // Наши корабли
-        let fieldVal = initial_myField[y][x];
-        let fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
-        if (fieldVal.containsShip)
-          fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
-        my_line.push(fieldVal_0);
-        // Корабли оппонента
-        fieldVal = initial_enemyField[y][x];
-        fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
-        if (fieldVal.containsShip) {
-          fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
-          remaining_hit_points++;
-        }
-        enemy_line.push(fieldVal_0);
+
+  let my_grid = [];
+  let enemy_grid = [];
+
+  // Заполняем из наших массивов
+  let remaining_hit_points = 0;
+  for (let y = 0; y < 10; y++) {
+    let my_line = [];
+    let enemy_line = [];
+    for (let x = 0; x < 10; x++) {
+      // Наши корабли
+      let fieldVal = initial_myField[y][x];
+      let fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
+      if (fieldVal.containsShip)
+        fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
+      my_line.push(fieldVal_0);
+      // Корабли оппонента
+      fieldVal = initial_enemyField[y][x];
+      fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
+      if (fieldVal.containsShip) {
+        fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
+        remaining_hit_points++;
       }
-
-      my_grid.push(my_line);
-      enemy_grid.push(enemy_line);
-  
+      enemy_line.push(fieldVal_0);
     }
 
-    let initial_my_board = { grid:my_grid };
-    let initial_opponent_board = { grid: enemy_grid, remaining_hit_points: 0 };
+    my_grid.push(my_line);
+    enemy_grid.push(enemy_line);
 
-    initial_opponent_board.remaining_hit_points=remaining_hit_points;
+  }
+
+  let initial_my_board = { grid: my_grid };
+  let initial_opponent_board = { grid: enemy_grid, remaining_hit_points: 0 };
+
+  initial_opponent_board.remaining_hit_points = remaining_hit_points;
 
   const [my_board, setMyBoard] = useState(initial_my_board);
-  
+
+  const [opponent_board, setOpponentBoard] = useState(initial_opponent_board);
+
 
   const assistantStateRef = useRef<AssistantAppState>();
   const assistantRef = useRef<ReturnType<typeof createAssistant>>();
@@ -196,15 +208,27 @@ export const App: FC = memo(() => {
 
     //const opponentBoard = this.state.opponent_board_0;
     // а вот через data к ним можно бы обратиться только внутри OpponentBoard
-    const remaining_hit_points = 10;//this.state.opponent_board.remaining_hit_points;
+    const remaining_hit_points = opponent_board.remaining_hit_points;
 
     return (
       <div id="opponents_board_container">
         <header>
           <h2>Shooting grid</h2>
         </header>
+        <OpponentBoard
+          //dispatch={dispatch}
+          //gameChannel={gameChannel}
+          data={opponent_board}
+          //playerId={playerId}
+          //currentTurn={currentTurn}
+          onClickBoard={() => dispatch({ type: "add_note", note: "123" })}
+         
+
+        />
+        <p>Попаданий до победы: {remaining_hit_points}</p>
       </div>
     );
+
   }
 
 
@@ -240,12 +264,13 @@ export const App: FC = memo(() => {
       </section>
     );
 
-  }  
+  }
 
 
   return (
     <main id="game_show" className="view-container">
       {_renderGameContent()}
+      {/*
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -285,6 +310,7 @@ export const App: FC = memo(() => {
           </li>
         ))}
       </ul>
+      */}
     </main>
   );
 });

@@ -1,6 +1,21 @@
 body {
-  background-color: #292929;
+  background-color: #282c34;
 }
+
+/* это я добавил, чтобы надпись была не белая на белом фоне */
+
+.bubble{
+  color: #000
+}
+
+.label {
+  color: #000
+}
+
+.input {
+  color: #000
+}
+
 
 .container {
   margin: 0 auto;
