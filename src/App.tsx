@@ -41,7 +41,7 @@ import { sberBox } from '@sberdevices/plasma-tokens/typo';
 import { body1, headline2 } from '@sberdevices/plasma-tokens';
 
 // получаем тему персонажа
-import { darkJoy } from '@sberdevices/plasma-tokens/themes';
+import { lightJoy } from '@sberdevices/plasma-tokens/themes';
 // получаем цвета для нашего интерфейса
 import { text, background, gradient } from '@sberdevices/plasma-tokens';
 
@@ -70,7 +70,8 @@ const DocStyles = createGlobalStyle`
     }
 `;
 // создаем react-компонент для персонажа
-const Theme = createGlobalStyle(darkJoy);
+//const Theme = createGlobalStyle(darkJoy);
+const Theme = createGlobalStyle(lightJoy);
 
 // Плазма
 //https://plasma.sberdevices.ru/current/?path=/docs/about--page

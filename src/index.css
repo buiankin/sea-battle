@@ -45,10 +45,11 @@ body {
   flex-wrap: wrap;
   overflow-y: auto;
   height: 100%;
-  background: #fff;
   padding-top: 1.5em;
-  background: #f8f8f9;
 }
+/*background: #fff;*/
+/*background: #f8f8f9;*/
+
 
 #game_show #boards_container .grid {
   display: flex;
@@ -95,6 +96,7 @@ body {
   background-position: 50% 50%;
   background-repeat: no-repeat;
 }
+
 
 #game_show #boards_container .grid .row > .cell.ship-hit.ship-hit,
 #game_show #boards_container .grid .row > .cell.hit.ship-hit {
