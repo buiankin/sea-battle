@@ -26,9 +26,54 @@ import placeShip from './utils/placeShip';
 import placeVarious from './utils/standardShipsSet';
 
 
-import './App.css';
+// Это не обязательно, т.к. все в в index на самом деле
+//import './App.css';
+
 import { getRandomInt } from './utils/Common';
 import { reducer } from "./store";
+
+// createGlobalStyle нужен для создания глобальных стилей
+import styled, { createGlobalStyle, css } from 'styled-components';
+
+// получаем значение для целевой платформы
+import { sberBox } from '@sberdevices/plasma-tokens/typo';
+// получаем стилевые объекты для нашего интерфейса
+import { body1, headline2 } from '@sberdevices/plasma-tokens';
+
+// получаем тему персонажа
+import { darkJoy } from '@sberdevices/plasma-tokens/themes';
+// получаем цвета для нашего интерфейса
+import { text, background, gradient } from '@sberdevices/plasma-tokens';
+
+//import { IconDownload } from '@sberdevices/plasma-icons';
+
+
+
+const AppStyled = styled.div`
+    padding: 30px;
+    ${body1}
+`;
+
+// создаем react-компонент c глобальными стилями типографики
+const TypoScale = createGlobalStyle(sberBox);
+
+// создаем react-компонент для подложки
+const DocStyles = createGlobalStyle`
+    /* stylelint-disable-next-line selector-nested-pattern */
+    html {
+        color: ${text};
+        background-color: ${background};
+        background-image: ${gradient};
+
+        /** необходимо залить градиентом всю подложку */
+        min-height: 100vh;
+    }
+`;
+// создаем react-компонент для персонажа
+const Theme = createGlobalStyle(darkJoy);
+
+// Плазма
+//https://plasma.sberdevices.ru/current/?path=/docs/about--page
 
 
 const initializeAssistant = (getState: any) => {
@@ -268,6 +313,12 @@ export const App: FC = memo(() => {
 
 
   return (
+    <AppStyled>
+    {/* Используем глобальные react-компоненты один раз */}
+    <TypoScale />
+    <DocStyles />
+    <Theme />
+
     <main id="game_show" className="view-container">
       {_renderGameContent()}
       {/*
@@ -312,5 +363,6 @@ export const App: FC = memo(() => {
       </ul>
       */}
     </main>
+    </AppStyled>
   );
 });
