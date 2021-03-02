@@ -5,6 +5,7 @@
   "homepage": "http://buiankin.github.io/sea-battle",
   "dependencies": {
     "@sberdevices/assistant-client": "^2.10.0",
+    "@sberdevices/plasma-icons": "^1.0.0-rc.1",
     "@sberdevices/plasma-tokens": "^1.0.0-rc.4",
     "@sberdevices/ui": "^1.0.0-rc.61",
     "@testing-library/jest-dom": "^5.11.9",
@@ -16,6 +17,7 @@
     "@types/react-dom": "^17.0.1",
     "@types/react-router-dom": "^5.1.7",
     "classnames": "^2.2.6",
+    "lodash.throttle": "^4.1.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-scripts": "4.0.2",

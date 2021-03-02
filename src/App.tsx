@@ -45,6 +45,8 @@ import { lightJoy } from '@sberdevices/plasma-tokens/themes';
 // получаем цвета для нашего интерфейса
 import { text, background, gradient } from '@sberdevices/plasma-tokens';
 
+import { Button } from '@sberdevices/ui';
+
 //import { IconDownload } from '@sberdevices/plasma-icons';
 
 
@@ -91,9 +93,134 @@ const initializeAssistant = (getState: any) => {
   return createAssistant({ getState });
 };
 
-export const App: FC = memo(() => {
 
-  const [appState, dispatch] = useReducer(reducer, { notes: [] });
+function codeCoordinate(x: number, y:number)
+{
+  return letters[y]+(x+1);
+}
+
+
+function decodeCoordinate(s: string)
+{
+  let result=null;
+  let x=-1;
+  let s2=s.trim().toUpperCase();
+  if (s2.length===3&&s2.substring(1)==="10")
+  {
+    x=9;
+  } else if (s2.length===2) {
+    if ('0123456789'.includes(s2.substring(2)))
+      x=parseInt(s2.substring(1))-1;
+  }
+  switch (s2.substring(0,1))
+  {
+    case 'А':
+      result={y:0, x:x};
+      break;
+    case 'Б':
+      result={y:1, x:x};
+      break;
+    case 'В':
+      result={y:2, x:x};
+      break;
+    case 'Г':
+      result={y:3, x:x};
+      break;
+    case 'Д':
+      result={y:4, x:x};
+      break;
+    case 'Е':
+      result={y:5, x:x};
+      break;
+    case 'Ж':
+      result={y:6, x:x};
+      break;
+    case 'З':
+      result={y:7, x:x};
+      break;
+    case 'И':
+      result={y:8, x:x};
+      break;
+    case 'К':
+      result={y:9, x:x};
+      break;
+                                                                
+  }
+  return result;
+}
+
+function handleClickOpponentBoard(x: any, y: any) {
+  // TODO
+  //alert('You fire ' + x + "/" + y);
+  //this.state.opponent_board.grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
+
+  /*
+
+  const alphabetical_coord=this.codeCoordinate(x, y);
+
+  let messages2 = [...this.state.messages];
+  messages2.push({text: alphabetical_coord, mine: true});
+  this.setState({messages: messages2});
+
+  let fire_registered=false;
+
+  let field=this.state.enemyField[y][x];
+  if (field.containsShip)
+  {
+    // Попали в корабль
+    if (!field.shot)
+    {
+      // До этого в это поле не попадали
+      fire_registered=true;
+      let newEnemyField=this.state.enemyField.slice();
+      newEnemyField[y][x].shot=true;
+      let shipId=field.shipId;
+      // Проверим, есть ли еще не подбитые его части
+      let live_parts=0;
+      for (let y = 0; y < 10; y++) {
+        for (let x = 0; x < 10; x++) {
+          if (newEnemyField[y][x].containsShip && newEnemyField[y][x].shipId===shipId)
+          {
+            if (!newEnemyField[y][x].shot)
+              live_parts++;
+          }
+        }
+      }
+      // TODO если корабль полностью подбит, рисовать его как-то по-другому
+  
+      let grid=this.state.opponent_board.grid.slice();
+      grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
+      let remaining_hit_points=this.state.opponent_board.remaining_hit_points;
+      remaining_hit_points--;
+      this.setState({ enemyField: newEnemyField, opponent_board: { ...this.state.opponent_board, grid: grid, remaining_hit_points: remaining_hit_points} });
+    } else {
+      // Повторное попадание
+    }
+  } else {
+    // Попали в воду
+    let grid=this.state.opponent_board.grid.slice();
+    if (grid[y][x] === Constants.GRID_VALUE_WATER)
+    {
+      // До этого туда не стреляли
+      fire_registered=true;
+      // хотя это бы и не обязательно делать (заполнять enemyField для воды), все равно попадание у нас контролируется по-другому,
+      // но для корректности данных лучше так сделать
+      let newEnemyField=this.state.enemyField.slice();
+      newEnemyField[y][x].shot=true;
+      //
+      grid[y][x] = Constants.GRID_VALUE_WATER_HIT;
+      this.setState({ enemyField: newEnemyField, opponent_board: { ...this.state.opponent_board, grid: grid} });
+    }
+  }
+
+  //if (fire_registered)
+  // this.processEnemyMove();
+  */
+}
+
+
+
+export const App: FC = memo(() => {
 
   const [note, setNote] = useState("");
 
@@ -186,7 +313,10 @@ export const App: FC = memo(() => {
 
   const [my_board, setMyBoard] = useState(initial_my_board);
 
-  const [opponent_board, setOpponentBoard] = useState(initial_opponent_board);
+  //const [opponent_board, setOpponentBoard] = useState(initial_opponent_board);
+
+  const [appState, dispatch] = useReducer(reducer, { notes: [], opponent_board: initial_opponent_board });
+
 
 
   const assistantStateRef = useRef<AssistantAppState>();
@@ -198,6 +328,13 @@ export const App: FC = memo(() => {
     assistantRef.current.on("data", ({ action }: any) => {
       if (action) {
         dispatch(action);
+        // TODO Тест
+        if (action.type==='lets_fire')
+        {
+          // Тут он скажет, что попал
+          // TODO action.coord_str
+          doneNote("Test!!!!");
+        }
       }
     });
   }, []);
@@ -254,7 +391,7 @@ export const App: FC = memo(() => {
 
     //const opponentBoard = this.state.opponent_board_0;
     // а вот через data к ним можно бы обратиться только внутри OpponentBoard
-    const remaining_hit_points = opponent_board.remaining_hit_points;
+    const remaining_hit_points = appState.opponent_board.remaining_hit_points;
 
     return (
       <div id="opponents_board_container">
@@ -264,12 +401,11 @@ export const App: FC = memo(() => {
         <OpponentBoard
           //dispatch={dispatch}
           //gameChannel={gameChannel}
-          data={opponent_board}
+          data={appState.opponent_board}
           //playerId={playerId}
           //currentTurn={currentTurn}
-          onClickBoard={() => dispatch({ type: "add_note", note: "123" })}
-         
-
+          //onClickBoard={() => dispatch({ type: "add_note", note: "123" })}
+          onClickBoard={(x:any, y:any) => dispatch({ type: "lets_fire", note: codeCoordinate(x,y)})}
         />
         <p>Попаданий до победы: {remaining_hit_points}</p>
       </div>
@@ -312,6 +448,12 @@ export const App: FC = memo(() => {
 
   }
 
+  // done в оригинале
+  const doneNote = (title: string) => {
+    assistantRef.current?.sendData({ action: { action_id: 'fireHit', parameters: { title } } });
+};
+
+
 
   return (
     <AppStyled>
@@ -319,7 +461,7 @@ export const App: FC = memo(() => {
     <TypoScale />
     <DocStyles />
     <Theme />
-
+    <Button onClick={() => doneNote("Test!")}>Normal Button</Button>
     <main id="game_show" className="view-container">
       {_renderGameContent()}
       {/*
