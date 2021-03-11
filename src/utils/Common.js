@@ -14,53 +14,53 @@ export function getRandomInt(min, max) {
 
 export function codeCoordinate(x, y)
 {
-  return letters[y]+(x+1);
+  return letters[x]+(y+1);
 }
 
 
 export function decodeCoordinate(s)
 {
   let result=null;
-  let x=-1;
+  let y=-1;
   let s2=s.trim().toUpperCase();
   if (s2.length===3&&s2.substring(1)==="10")
   {
-    x=9;
+    y=9;
   } else if (s2.length===2) {
     if ('0123456789'.includes(s2.substring(2)))
-      x=parseInt(s2.substring(1))-1;
+      y=parseInt(s2.substring(1))-1;
   }
   switch (s2.substring(0,1))
   {
     case 'А':
-      result={y:0, x:x};
+      result={x:0, y:y};
       break;
     case 'Б':
-      result={y:1, x:x};
+      result={x:1, y:y};
       break;
     case 'В':
-      result={y:2, x:x};
+      result={x:2, y:y};
       break;
     case 'Г':
-      result={y:3, x:x};
+      result={x:3, y:y};
       break;
     case 'Д':
-      result={y:4, x:x};
+      result={x:4, y:y};
       break;
     case 'Е':
-      result={y:5, x:x};
+      result={x:5, y:y};
       break;
     case 'Ж':
-      result={y:6, x:x};
+      result={x:6, y:y};
       break;
     case 'З':
-      result={y:7, x:x};
+      result={x:7, y:y};
       break;
     case 'И':
-      result={y:8, x:x};
+      result={x:8, y:y};
       break;
     case 'К':
-      result={y:9, x:x};
+      result={x:9, y:y};
       break;
                                                                 
   }

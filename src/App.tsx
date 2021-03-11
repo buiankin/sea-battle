@@ -280,7 +280,7 @@ export const App: FC = memo(() => {
           //playerId={playerId}
           //currentTurn={currentTurn}
           //onClickBoard={() => dispatch({ type: "add_note", note: "123" })}
-          onClickBoard={(x:any, y:any) => dispatch({ type: "lets_fire", note: codeCoordinate(x,y)})}
+          onClickBoard={(x:any, y:any) => dispatch({ type: "lets_fire", coord_str: codeCoordinate(x,y)})}
         />
         <p>Попаданий до победы: {remaining_hit_points}</p>
       </div>

@@ -28,7 +28,7 @@ type Action =
 }
   | {
     type: "lets_fire";
-    note: string;
+    coord_str: string;
   }
   | {
       type: "add_note";
@@ -139,7 +139,7 @@ export const reducer = (state: State, action: Action) => {
 
     case "lets_fire":
       let fire_registered=false;
-      let coord=decodeCoordinate(action.note);
+      let coord=decodeCoordinate(action.coord_str);
       if (coord)
       {
         let x=coord.x, y=coord.y;
@@ -170,10 +170,9 @@ export const reducer = (state: State, action: Action) => {
         
             let grid=state.opponent_board.grid.slice();
             grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
-            let new_remaining_hit_points=state.opponent_board.remaining_hit_points-1;
             //setState({ enemyField: newEnemyField, opponent_board: { ...appState.opponent_board, grid: grid, remaining_hit_points: remaining_hit_points} });
             let newState={...state,
-            opponent_board: {grid: grid, remaining_hit_points: new_remaining_hit_points},
+            opponent_board: {grid: grid, remaining_hit_points: state.opponent_board.remaining_hit_points-1},
             enemyField: newEnemyField
             };
             return newState;
