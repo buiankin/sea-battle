@@ -5,6 +5,7 @@ import React, {
   useState,
   useRef,
   useEffect,
+  useLayoutEffect,
 } from 'react';
 
 import {
@@ -16,7 +17,6 @@ import {
 //import  {Link} from 'react-router-dom';
 
 import Constants from './constants';
-import { letters } from './constants/messages';
 import Header from './components/header'
 import Chat from './components/chat'
 import MyBoard from './components/my_board'
@@ -29,7 +29,7 @@ import placeVarious from './utils/standardShipsSet';
 // Это не обязательно, т.к. все в в index на самом деле
 //import './App.css';
 
-import { getRandomInt } from './utils/Common';
+import { getRandomInt, codeCoordinate, decodeCoordinate} from './utils/Common';
 import { reducer } from "./store";
 
 // createGlobalStyle нужен для создания глобальных стилей
@@ -46,6 +46,7 @@ import { lightJoy } from '@sberdevices/plasma-tokens/themes';
 import { text, background, gradient } from '@sberdevices/plasma-tokens';
 
 import { Button } from '@sberdevices/ui';
+import { createArrayTypeNode } from 'typescript';
 
 //import { IconDownload } from '@sberdevices/plasma-icons';
 
@@ -94,60 +95,7 @@ const initializeAssistant = (getState: any) => {
 };
 
 
-function codeCoordinate(x: number, y:number)
-{
-  return letters[y]+(x+1);
-}
 
-
-function decodeCoordinate(s: string)
-{
-  let result=null;
-  let x=-1;
-  let s2=s.trim().toUpperCase();
-  if (s2.length===3&&s2.substring(1)==="10")
-  {
-    x=9;
-  } else if (s2.length===2) {
-    if ('0123456789'.includes(s2.substring(2)))
-      x=parseInt(s2.substring(1))-1;
-  }
-  switch (s2.substring(0,1))
-  {
-    case 'А':
-      result={y:0, x:x};
-      break;
-    case 'Б':
-      result={y:1, x:x};
-      break;
-    case 'В':
-      result={y:2, x:x};
-      break;
-    case 'Г':
-      result={y:3, x:x};
-      break;
-    case 'Д':
-      result={y:4, x:x};
-      break;
-    case 'Е':
-      result={y:5, x:x};
-      break;
-    case 'Ж':
-      result={y:6, x:x};
-      break;
-    case 'З':
-      result={y:7, x:x};
-      break;
-    case 'И':
-      result={y:8, x:x};
-      break;
-    case 'К':
-      result={y:9, x:x};
-      break;
-                                                                
-  }
-  return result;
-}
 
 function handleClickOpponentBoard(x: any, y: any) {
   // TODO
@@ -226,119 +174,45 @@ export const App: FC = memo(() => {
 
   const [gameOver, setGameOver] = useState(false);
 
-  let initial_myField = Array(0);
-  let myShips = placeVarious();
+  const emptyRow=[Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER,
+                  Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER];
+  const emptyGrid=[emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow];
 
-  let initial_enemyField = Array(0);
-  let enemyShips = placeVarious();
+  const [appState, dispatch] = useReducer(reducer, { notes: [], my_board: {grid: emptyGrid}, myField: [], opponent_board: {grid: emptyGrid, remaining_hit_points:0}, enemyField: []} );
 
-
-  // первоначальное (пустое) состояние поля
-  //for (let i = 0; i < 10; i++) {
-  //  initial_myField.push([]);
-  //  initial_enemyField.push([]);
-  //}
-
-  for (let i = 0; i < 10; i++) {
-    let val_in_line = [];
-    let enemy_val_in_line = [];
-
-    for (let j = 0; j < 10; j++) {
-      val_in_line.push({
-        x: j,
-        y: i,
-        containsShip: false,
-        shot: false,
-        isShipVisible: false,
-        shipId: null,
-      });
-
-      enemy_val_in_line.push({
-        x: j,
-        y: i,
-        containsShip: false,
-        shot: false,
-        isShipVisible: false,
-        shipId: null,
-      });
-    }
-
-    initial_myField.push(val_in_line);
-    initial_enemyField.push(enemy_val_in_line);
-  }
-
-    // расставляем стандартный набор кораблей
-    myShips.forEach((ship: any) => {
-      placeShip(initial_myField, ship)
-    });
-    enemyShips.forEach((ship0: any) => {
-      placeShip(initial_enemyField, ship0)
-    });
-
-
-  let my_grid = [];
-  let enemy_grid = [];
-
-  // Заполняем из наших массивов
-  let remaining_hit_points = 0;
-  for (let y = 0; y < 10; y++) {
-    let my_line = [];
-    let enemy_line = [];
-    for (let x = 0; x < 10; x++) {
-      // Наши корабли
-      let fieldVal = initial_myField[y][x];
-      let fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
-      if (fieldVal.containsShip)
-        fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
-      my_line.push(fieldVal_0);
-      // Корабли оппонента
-      fieldVal = initial_enemyField[y][x];
-      fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
-      if (fieldVal.containsShip) {
-        fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
-        remaining_hit_points++;
-      }
-      enemy_line.push(fieldVal_0);
-    }
-
-    my_grid.push(my_line);
-    enemy_grid.push(enemy_line);
-
-  }
-
-  let initial_my_board = { grid: my_grid };
-  let initial_opponent_board = { grid: enemy_grid, remaining_hit_points: 0 };
-
-  initial_opponent_board.remaining_hit_points = remaining_hit_points;
-
-  const [my_board, setMyBoard] = useState(initial_my_board);
-
-  //const [opponent_board, setOpponentBoard] = useState(initial_opponent_board);
-
-  const [appState, dispatch] = useReducer(reducer, { notes: [], opponent_board: initial_opponent_board });
-
-
-
+  
   const assistantStateRef = useRef<AssistantAppState>();
   const assistantRef = useRef<ReturnType<typeof createAssistant>>();
 
   useEffect(() => {
-    assistantRef.current = initializeAssistant(() => assistantStateRef.current);
 
+    dispatch({ type: "init"});
+
+    assistantRef.current = initializeAssistant(() => assistantStateRef.current);
+    // type='character', character='sber'
+    // assistantRef.current.on("data", ({ type, character, action }: any) => {
     assistantRef.current.on("data", ({ action }: any) => {
       if (action) {
         dispatch(action);
         // TODO Тест
         if (action.type==='lets_fire')
         {
-          // Тут он скажет, что попал
-          // TODO action.coord_str
-          doneNote("Test!!!!");
+          let coord=decodeCoordinate(action.coord_str);
+          if (coord)
+          {
+            // Тут он скажет, что попал
+            doneNote("Test!!!!");
+
+        
+          }
         }
       }
     });
   }, []);
 
+  // Здесь была передача текущего состояния в смартап
+  // (где оно там используется, я пока не увидел, да и не смотрел)
+  /*
   useEffect(() => {
     assistantStateRef.current = {
       item_selector: {
@@ -350,6 +224,7 @@ export const App: FC = memo(() => {
       },
     };
   }, [appState]);
+  */
 
   function _renderResult() {
 
@@ -436,7 +311,7 @@ export const App: FC = memo(() => {
               //dispatch={dispatch}
               //gameChannel={gameChannel}
               //selectedShip={selectedShip}
-              data={my_board}
+              data={appState.my_board}
             />
           </div>
           {
