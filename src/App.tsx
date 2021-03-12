@@ -12,6 +12,7 @@ import {
   createSmartappDebugger,
   createAssistant,
   AssistantAppState,
+  AssistantCharacterType
 } from "@sberdevices/assistant-client";
 
 //import  {Link} from 'react-router-dom';
@@ -41,7 +42,8 @@ import { sberBox } from '@sberdevices/plasma-tokens/typo';
 import { body1, headline2 } from '@sberdevices/plasma-tokens';
 
 // получаем тему персонажа
-import { lightJoy } from '@sberdevices/plasma-tokens/themes';
+import { darkEva, darkSber, darkJoy } from '@sberdevices/plasma-tokens/themes';
+
 // получаем цвета для нашего интерфейса
 import { text, background, gradient } from '@sberdevices/plasma-tokens';
 
@@ -74,7 +76,11 @@ const DocStyles = createGlobalStyle`
 `;
 // создаем react-компонент для персонажа
 //const Theme = createGlobalStyle(darkJoy);
-const Theme = createGlobalStyle(lightJoy);
+//const Theme = createGlobalStyle(lightJoy);
+
+const ThemeBackgroundEva = createGlobalStyle(darkEva);
+const ThemeBackgroundSber = createGlobalStyle(darkSber);
+const ThemeBackgroundJoy = createGlobalStyle(darkJoy);
 
 // Плазма
 //https://plasma.sberdevices.ru/current/?path=/docs/about--page
@@ -169,6 +175,7 @@ function handleClickOpponentBoard(x: any, y: any) {
 
 
 export const App: FC = memo(() => {
+  const [character, setCharacter] = useState('sber' as AssistantCharacterType);
 
   const [note, setNote] = useState("");
 
@@ -190,6 +197,35 @@ export const App: FC = memo(() => {
 
     assistantRef.current = initializeAssistant(() => assistantStateRef.current);
     // type='character', character='sber'
+
+    assistantRef.current.on('data', (command) => {
+      switch (command.type) {
+          case 'character':
+              setCharacter(command.character.id);
+              // 'sber' | 'eva' | 'joy';
+              break;
+          case 'navigation':
+              break;
+          case 'smart_app_data':
+            /*
+              if (command.action)
+              {
+                if (command.action.type==='lets_fire')
+                {
+                  let coord=decodeCoordinate(action.coord_str);
+                  if (coord)
+                  {
+                  }
+                }
+              }
+              */
+              break;
+          default:
+              return;
+      }
+  });
+}, []);
+  /*    
     // assistantRef.current.on("data", ({ type, character, action }: any) => {
     assistantRef.current.on("data", ({ action }: any) => {
       if (action) {
@@ -208,7 +244,9 @@ export const App: FC = memo(() => {
         }
       }
     });
+
   }, []);
+  */
 
   // Здесь была передача текущего состояния в смартап
   // (где оно там используется, я пока не увидел, да и не смотрел)
@@ -335,7 +373,19 @@ export const App: FC = memo(() => {
     {/* Используем глобальные react-компоненты один раз */}
     <TypoScale />
     <DocStyles />
-    <Theme />
+    {(() => {
+                switch (character) {
+                    case 'sber':
+                        return <ThemeBackgroundSber />;
+                    case 'eva':
+                        return <ThemeBackgroundEva />;
+                    case 'joy':
+                        return <ThemeBackgroundJoy />;
+                    default:
+                        return;
+                }
+            })()}    
+    {/*<Theme />*/}
     <Button onClick={() => doneNote("Test!")}>Normal Button</Button>
     <main id="game_show" className="view-container">
       {_renderGameContent()}
