@@ -6,12 +6,14 @@ import React, {
   useRef,
   useEffect,
   useLayoutEffect,
+  RefObject,
 } from 'react';
 
 import {
   createSmartappDebugger,
   createAssistant,
   AssistantAppState,
+  AssistantSmartAppData,
   AssistantCharacterType
 } from "@sberdevices/assistant-client";
 
@@ -31,7 +33,7 @@ import placeVarious from './utils/standardShipsSet';
 //import './App.css';
 
 import { getRandomInt, codeCoordinate, decodeCoordinate} from './utils/Common';
-import { reducer } from "./store";
+import { ContextApp, initialState, reducer } from "./store";
 
 // createGlobalStyle нужен для создания глобальных стилей
 import styled, { createGlobalStyle, css } from 'styled-components';
@@ -172,20 +174,236 @@ function handleClickOpponentBoard(x: any, y: any) {
   */
 }
 
+export class App extends React.Component<any, any> {
+
+  //assistantRef = React.createRef<ReturnType<typeof createAssistant>>();
+  //assistantRef = React.createRef<AssistantSmartAppData>();
+  //private assistantRef :RefObject<ReturnType<typeof createAssistant>>;
+  private assistant :any;
+  
+  assistantStateRef = React.createRef<AssistantAppState>();
+  //assistant: AssistantAppState=null;
+
+  constructor(props:any, state:any) {
+    super(props);
+    this.state=this.getBoardInitialState();
+    this.state={...this.state, character: 'sber'};
+
+  }
+
+  componentDidMount() {
+    // TODO
+    this.assistant = initializeAssistant(() => this.assistantStateRef.current);
+
+    //this.assistant = initializeAssistant(() => this.assistantStateRef.current);
+
+    // type='character', character='sber'
+    this.assistant.on('data', ({ type, character, navigation, action }: any) => {
+      if (character)
+        // 'sber' | 'eva' | 'joy';
+        this.setState({...this.state, character: character.id});
+      //if (navigation)
+      if (action)
+      {
+        /*
+        if (action.type==='lets_fire')
+        {
+          let coord=decodeCoordinate(action.coord_str);
+          if (coord)
+          {
+          }
+        }
+        */
+       this.myDispatch(action);
+      }
+  });
 
 
-export const App: FC = memo(() => {
+  }
+
+  componentDidUpdate(oldProps: any) {
+  }
+  
+  getBoardInitialState()
+  {
+    let initial_myField = Array(0);
+    let myShips = placeVarious();
+  
+    let initial_enemyField = Array(0);
+    let enemyShips = placeVarious();
+  
+  
+    // первоначальное (пустое) состояние поля
+    //for (let i = 0; i < 10; i++) {
+    //  initial_myField.push([]);
+    //  initial_enemyField.push([]);
+    //}
+  
+    for (let i = 0; i < 10; i++) {
+      let val_in_line = [];
+      let enemy_val_in_line = [];
+  
+      for (let j = 0; j < 10; j++) {
+        val_in_line.push({
+          x: j,
+          y: i,
+          containsShip: false,
+          shot: false,
+          isShipVisible: false,
+          shipId: null,
+        });
+  
+        enemy_val_in_line.push({
+          x: j,
+          y: i,
+          containsShip: false,
+          shot: false,
+          isShipVisible: false,
+          shipId: null,
+        });
+      }
+  
+      initial_myField.push(val_in_line);
+      initial_enemyField.push(enemy_val_in_line);
+    }
+  
+      // расставляем стандартный набор кораблей
+      myShips.forEach((ship: any) => {
+        placeShip(initial_myField, ship)
+      });
+      enemyShips.forEach((ship0: any) => {
+        placeShip(initial_enemyField, ship0)
+      });
+  
+  
+    let my_grid = [];
+    let enemy_grid = [];
+  
+    // Заполняем из наших массивов
+    let remaining_hit_points = 0;
+    for (let y = 0; y < 10; y++) {
+      let my_line = [];
+      let enemy_line = [];
+      for (let x = 0; x < 10; x++) {
+        // Наши корабли
+        let fieldVal = initial_myField[y][x];
+        let fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
+        if (fieldVal.containsShip)
+          fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
+        my_line.push(fieldVal_0);
+        // Корабли оппонента
+        fieldVal = initial_enemyField[y][x];
+        fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
+        if (fieldVal.containsShip) {
+          fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
+          remaining_hit_points++;
+        }
+        enemy_line.push(fieldVal_0);
+      }
+  
+      my_grid.push(my_line);
+      enemy_grid.push(enemy_line);
+  
+    }
+  
+    let initial_my_board = { grid: my_grid };
+    let initial_opponent_board = { grid: enemy_grid, remaining_hit_points};
+  
+    return {
+      notes: [],
+      my_board: initial_my_board,
+      myField: initial_myField,
+      opponent_board: initial_opponent_board,
+      enemyField: initial_enemyField
+    };
+
+  }
+
+  // { type: "lets_fire", coord_str: codeCoordinate(x,y)})
+  myDispatch(myAction: any)
+  {
+    if (myAction.type==='lets_fire')
+    {
+      let fire_registered=false;
+      let coord=decodeCoordinate(myAction.coord_str);
+      if (coord)
+      {
+        let x=coord.x, y=coord.y;
+
+        let field=this.state.enemyField[y][x];
+        if (field.containsShip)
+        {
+          // Попали в корабль
+          if (!field.shot)
+          {
+            // До этого в это поле не попадали
+            fire_registered=true;
+            let newEnemyField=this.state.enemyField.slice();
+            newEnemyField[y][x].shot=true;
+            let shipId=field.shipId;
+            // Проверим, есть ли еще не подбитые его части
+            let live_parts=0;
+            for (let y = 0; y < 10; y++) {
+              for (let x = 0; x < 10; x++) {
+                if (newEnemyField[y][x].containsShip && newEnemyField[y][x].shipId===shipId)
+                {
+                  if (!newEnemyField[y][x].shot)
+                    live_parts++;
+                }
+              }
+            }
+            // TODO если корабль полностью подбит, рисовать его как-то по-другому
+        
+            let grid=this.state.opponent_board.grid.slice();
+            grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
+            //setState({ enemyField: newEnemyField, opponent_board: { ...appState.opponent_board, grid: grid, remaining_hit_points: remaining_hit_points} });
+            this.setState({...this.state,
+            opponent_board: {grid: grid, remaining_hit_points: this.state.opponent_board.remaining_hit_points-1},
+            enemyField: newEnemyField
+            });
+            if (live_parts>0)
+              this.assistant?.sendData({ action: { action_id: 'fireHit', parameters: { coord: myAction.coord_str} } });
+            else
+              this.assistant?.sendData({ action: { action_id: 'fireDone', parameters: { coord: myAction.coord_str} } });
+          } else {
+            // Повторное попадание
+            this.assistant?.sendData({ action: { action_id: 'fireAgain', parameters: { coord: myAction.coord_str} } });
+          }
+        } else {
+          // Попали в воду
+          let grid=this.state.opponent_board.grid.slice();
+          if (grid[y][x] === Constants.GRID_VALUE_WATER)
+          {
+            // До этого туда не стреляли
+            fire_registered=true;
+            // хотя это бы и не обязательно делать (заполнять enemyField для воды), все равно попадание у нас контролируется по-другому,
+            // но для корректности данных лучше так сделать
+            let newEnemyField=this.state.enemyField.slice();
+            newEnemyField[y][x].shot=true;
+            //
+            grid[y][x] = Constants.GRID_VALUE_WATER_HIT;
+            //this.setState({ enemyField: newEnemyField, opponent_board: { ...this.state.opponent_board, grid: grid} });
+            this.setState({
+              ...this.state,
+              opponent_board: { ...this.state.opponent_board, grid: grid}, enemyField: newEnemyField
+            });
+          }
+          this.assistant?.sendData({ action: { action_id: 'fireMiss', parameters: { coord: myAction.coord_str} } });
+        }
+      }
+
+    }
+  }
+
+  /*
+
   const [character, setCharacter] = useState('sber' as AssistantCharacterType);
 
   const [note, setNote] = useState("");
 
   const [gameOver, setGameOver] = useState(false);
 
-  const emptyRow=[Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER,
-                  Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER];
-  const emptyGrid=[emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow];
-
-  const [appState, dispatch] = useReducer(reducer, { notes: [], my_board: {grid: emptyGrid}, myField: [], opponent_board: {grid: emptyGrid, remaining_hit_points:0}, enemyField: []} );
+  const [appState, dispatch] = useReducer(reducer, initialState );
 
   
   const assistantStateRef = useRef<AssistantAppState>();
@@ -197,35 +415,24 @@ export const App: FC = memo(() => {
 
     assistantRef.current = initializeAssistant(() => assistantStateRef.current);
     // type='character', character='sber'
-
-    assistantRef.current.on('data', (command) => {
-      switch (command.type) {
-          case 'character':
-              setCharacter(command.character.id);
-              // 'sber' | 'eva' | 'joy';
-              break;
-          case 'navigation':
-              break;
-          case 'smart_app_data':
-            /*
-              if (command.action)
-              {
-                if (command.action.type==='lets_fire')
-                {
-                  let coord=decodeCoordinate(action.coord_str);
-                  if (coord)
-                  {
-                  }
-                }
-              }
-              */
-              break;
-          default:
-              return;
+    assistantRef.current.on('data', ({ type, character, navigation, action }: any) => {
+      if (character)
+        // 'sber' | 'eva' | 'joy';
+        setCharacter(character.id);
+      //if (navigation)
+      if (action)
+      {
+        if (action.type==='lets_fire')
+        {
+          let coord=decodeCoordinate(action.coord_str);
+          if (coord)
+          {
+          }
+        }
+        dispatch(action);
       }
   });
 }, []);
-  /*    
     // assistantRef.current.on("data", ({ type, character, action }: any) => {
     assistantRef.current.on("data", ({ action }: any) => {
       if (action) {
@@ -246,11 +453,9 @@ export const App: FC = memo(() => {
     });
 
   }, []);
-  */
 
   // Здесь была передача текущего состояния в смартап
   // (где оно там используется, я пока не увидел, да и не смотрел)
-  /*
   useEffect(() => {
     assistantStateRef.current = {
       item_selector: {
@@ -264,7 +469,7 @@ export const App: FC = memo(() => {
   }, [appState]);
   */
 
-  function _renderResult() {
+  _renderResult() {
 
     //const { game, playerId, winnerId } = this.props;
 
@@ -279,7 +484,7 @@ export const App: FC = memo(() => {
     return (
       <div id="game_result">
         <header>
-          {/*<Logo/>*/}
+        {/*<Logo/>*/}
           <h1>Game over</h1>
           <p>{message}</p>
           <a
@@ -291,7 +496,7 @@ export const App: FC = memo(() => {
     );
   }
 
-  function _renderOpponentBoard() {
+  _renderOpponentBoard() {
     //const { dispatch, game, gameChannel, playerId, currentTurn, readyForBattle } = this.props;
 
     /*
@@ -304,7 +509,7 @@ export const App: FC = memo(() => {
 
     //const opponentBoard = this.state.opponent_board_0;
     // а вот через data к ним можно бы обратиться только внутри OpponentBoard
-    const remaining_hit_points = appState.opponent_board.remaining_hit_points;
+    const remaining_hit_points = this.state.opponent_board.remaining_hit_points;
 
     return (
       <div id="opponents_board_container">
@@ -314,11 +519,11 @@ export const App: FC = memo(() => {
         <OpponentBoard
           //dispatch={dispatch}
           //gameChannel={gameChannel}
-          data={appState.opponent_board}
+          data={this.state.opponent_board}
           //playerId={playerId}
           //currentTurn={currentTurn}
           //onClickBoard={() => dispatch({ type: "add_note", note: "123" })}
-          onClickBoard={(x:any, y:any) => dispatch({ type: "lets_fire", coord_str: codeCoordinate(x,y)})}
+          onClickBoard={(x:any, y:any) => this.myDispatch({ type: "lets_fire", coord_str: codeCoordinate(x,y)})}
         />
         <p>Попаданий до победы: {remaining_hit_points}</p>
       </div>
@@ -327,8 +532,8 @@ export const App: FC = memo(() => {
   }
 
 
-  function _renderGameContent() {
-    if (gameOver) return _renderResult();
+  _renderGameContent() {
+    if (this.state.gameOver) return this._renderResult();
 
     return (
       <section id="main_section">
@@ -349,11 +554,11 @@ export const App: FC = memo(() => {
               //dispatch={dispatch}
               //gameChannel={gameChannel}
               //selectedShip={selectedShip}
-              data={appState.my_board}
+              data={this.state.my_board}
             />
           </div>
           {
-            _renderOpponentBoard()
+            this._renderOpponentBoard()
           }
         </section>
       </section>
@@ -362,19 +567,19 @@ export const App: FC = memo(() => {
   }
 
   // done в оригинале
-  const doneNote = (title: string) => {
-    assistantRef.current?.sendData({ action: { action_id: 'fireHit', parameters: { title } } });
-};
+  //const doneNote = (title: string) => {
+  //  assistantRef.current?.sendData({ action: { action_id: 'fireHit', parameters: { title } } });
+//};
 
 
-
+render() {
   return (
     <AppStyled>
     {/* Используем глобальные react-компоненты один раз */}
     <TypoScale />
     <DocStyles />
     {(() => {
-                switch (character) {
+                switch (this.state.character) {
                     case 'sber':
                         return <ThemeBackgroundSber />;
                     case 'eva':
@@ -386,9 +591,9 @@ export const App: FC = memo(() => {
                 }
             })()}    
     {/*<Theme />*/}
-    <Button onClick={() => doneNote("Test!")}>Normal Button</Button>
+    {/*<Button onClick={() => doneNote("Test!")}>Normal Button</Button>*/}
     <main id="game_show" className="view-container">
-      {_renderGameContent()}
+      {this._renderGameContent()}
       {/*
       <form
         onSubmit={(event) => {
@@ -433,4 +638,6 @@ export const App: FC = memo(() => {
     </main>
     </AppStyled>
   );
-});
+}
+}
+

@@ -7,6 +7,17 @@ import OpponentBoard from './components/opponent_board';
 import placeShip from './utils/placeShip';
 import placeVarious from './utils/standardShipsSet';
 
+import React, {createContext} from 'react';
+
+export const ContextApp = createContext({});
+
+const emptyRow=[Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER,
+  Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER];
+const emptyGrid=[emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow];
+
+export const initialState = { notes: [], my_board: {grid: emptyGrid}, myField: [], opponent_board: {grid: emptyGrid, remaining_hit_points:0}, enemyField: []};
+
+
 
 type Note = {
   id: string;
