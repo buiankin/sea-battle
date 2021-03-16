@@ -392,8 +392,163 @@ export class App extends React.Component<any, any> {
         }
       }
 
+      // Теперь он сам стреляет
+      setTimeout(() => this.processEnemyMove(), 3000);
+
     }
   }
+
+  fireMyBoard(alphabetical_coord: string)
+  {
+    const coordinate=decodeCoordinate(alphabetical_coord);
+    if (coordinate==null)
+      return;
+    const x=coordinate.x;
+    const y=coordinate.y;
+
+    let fire_registered=false;
+
+    let field=this.state.myField[y][x];
+    if (field.containsShip)
+    {
+      // Попали в корабль
+      if (!field.shot)
+      {
+        // До этого в это поле не попадали
+        fire_registered=true;
+        let newEnemyField=this.state.myField.slice();
+        newEnemyField[y][x].shot=true;
+        let shipId=field.shipId;
+        // Проверим, есть ли еще не подбитые его части
+        let live_parts=0;
+        for (let y = 0; y < 10; y++) {
+          for (let x = 0; x < 10; x++) {
+            if (newEnemyField[y][x].containsShip && newEnemyField[y][x].shipId===shipId)
+            {
+              if (!newEnemyField[y][x].shot)
+                live_parts++;
+            }
+          }
+        }
+        // TODO если корабль полностью подбит, рисовать его как-то по-другому
+    
+        let grid=this.state.my_board.grid.slice();
+        grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
+        this.setState({ myField: newEnemyField, my_board: { ...this.state.my_board, grid: grid} });
+      } else {
+        // Повторное попадание
+      }
+    } else {
+      // Попали в воду
+      let grid=this.state.my_board.grid.slice();
+      if (grid[y][x] === Constants.GRID_VALUE_WATER)
+      {
+        // До этого туда не стреляли
+        fire_registered=true;
+        let newEnemyField=this.state.myField.slice();
+        newEnemyField[y][x].shot=true;
+        grid[y][x] = Constants.GRID_VALUE_WATER_HIT;
+        this.setState({ myField: newEnemyField, my_board: { ...this.state.my_board, grid: grid} });
+      }
+    }
+
+  }
+
+  processEnemyMove()
+  {
+    const offsets=[{x:-1,y:-1}, {x:0,y:-1}, {x:1,y:-1},
+      {x:-1,y:0}, {x:0,y:0}, {x:1,y:0},
+      {x:-1,y:1}, {x:0,y:1}, {x:1,y:1},
+    ];
+
+    const offsets4=[{x:0,y:-1},{x:-1,y:0},{x:1,y:0},{x:0,y:1}];
+
+    let field=this.state.myField;
+    // Первый проход, ищем точки, где рядом есть с попаданиями
+    // они будут иметь признак первичных
+    // а уже на втором проходе будет происходить поиск, куда можно в принципе выстрелить
+    // поэтому если координата будет иметь признак первичной, но стрелять туда нельзя, она в массив не попадет
+    let primary_area=Array.from(Array(10), _ => Array(10).fill(0));
+    // если в этой координате подбитый корабль
+    // найдем, есть ли не подбитые в 4-х направлениях от него
+    // и если есть, то это он сам (т.к. нельзя ставить рядом)
+    // Заодно заполним список живых кораблей
+    let live_ships=new Set();
+    for (let y = 0; y < 10; y++) {
+      for (let x = 0; x < 10; x++) {
+        for (let i=0; i<offsets4.length; i++){
+          if (field[y][x].containsShip&&!field[y][x].shot) {
+            live_ships.add(field[y][x].shipId);
+          }
+          let _x=x+offsets4[i].x;
+          let _y=y+offsets4[i].y;
+          if (_x>=0&&_x<10&&_y>=0&&_y<10&&field[_y][_x].containsShip&&field[_y][_x].shot)
+          {
+            primary_area[y][x]=1;
+            break;
+          }
+        }
+      }
+    }
+
+    let primary_targets=[];
+    let targets=[];
+
+    // составим массив координат, куда враг может выстрелить
+    for (let y = 0; y < 10; y++) {
+      for (let x = 0; x < 10; x++) {
+        // если туда еще не стреляли
+        let canFire=true;
+        if (!field[y][x].shot)
+        {
+          // и вблизи нет подбитых (полностью) кораблей
+          for (let i=0; i<offsets.length; i++){
+            let _x=x+offsets[i].x;
+            let _y=y+offsets[i].y;
+            if (_x>=0&&_x<10&&_y>=0&&_y<10&&field[_y][_x].containsShip&&field[_y][_x].shot)
+            {
+              if (!live_ships.has(field[_y][_x].shipId))
+              {
+                canFire=false;
+                break;
+              }
+            }
+          }
+          if (canFire)
+          {
+            targets.push({y:y, x:x});
+            if (primary_area[y][x]===1)
+              primary_targets.push({y:y, x:x});
+          }
+        }
+      }
+    }
+    // На всякий случай проверка, что есть куда выстрелить (по идее в этом случае игра уже закончена)
+    if (targets.length>0)
+    {
+      // Координаты выстрела
+      let fire_coord=primary_targets.length>0?primary_targets[getRandomInt(0, primary_targets.length-1)]:targets[getRandomInt(0, targets.length-1)];
+
+      let alphabetical_coord=codeCoordinate(fire_coord.x, fire_coord.y);
+
+      //
+      //let messages2 = [...this.state.messages];
+      //messages2.push({text: alphabetical_coord, mine: false});
+      //this.setState({messages: messages2});
+
+      this.fireMyBoard(alphabetical_coord);
+    }
+/*     if (primary_targets.length>0)
+    {
+      let idx=getRandomInt(0, primary_targets.length);
+      let fire_coord=primary_targets[idx];
+    } else
+    {
+
+    }
+ */    
+  }
+
 
   /*
 

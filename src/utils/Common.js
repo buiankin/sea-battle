@@ -22,7 +22,7 @@ export function decodeCoordinate(s)
 {
   let result=null;
   let y=-1;
-  let s2=s.trim().toUpperCase();
+  let s2=s.replace("-", " ").replace(" ", "").toUpperCase();
   if (s2.length===3&&s2.substring(1)==="10")
   {
     y=9;
