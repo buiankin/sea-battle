@@ -179,7 +179,7 @@ export class App extends React.Component<any, any> {
   //assistantRef = React.createRef<ReturnType<typeof createAssistant>>();
   //assistantRef = React.createRef<AssistantSmartAppData>();
   //private assistantRef :RefObject<ReturnType<typeof createAssistant>>;
-  private assistant :any;
+  private assistant :any = null;
   
   assistantStateRef = React.createRef<AssistantAppState>();
   //assistant: AssistantAppState=null;
@@ -193,12 +193,14 @@ export class App extends React.Component<any, any> {
 
   componentDidMount() {
     // TODO
-    this.assistant = initializeAssistant(() => this.assistantStateRef.current);
-
-    //this.assistant = initializeAssistant(() => this.assistantStateRef.current);
+    try {
+      this.assistant = initializeAssistant(() => this.assistantStateRef.current);
+    } catch (error) {
+      this.assistant = null;
+    }
 
     // type='character', character='sber'
-    this.assistant.on('data', ({ type, character, navigation, action }: any) => {
+    this.assistant?.on('data', ({ type, character, navigation, action }: any) => {
       if (character)
         // 'sber' | 'eva' | 'joy';
         this.setState({...this.state, character: character.id});
