@@ -22,7 +22,14 @@ export function decodeCoordinate(s)
 {
   let result=null;
   let y=-1;
-  let s2=s.replace("-", " ").replace(" ", "").toUpperCase();
+  // И сразу добавим пробелы по краям, чтобы можно было найти числа, произнесенные голосом
+  let s2=s.replace("-", " ").toUpperCase();
+  const digits_alphabetical=['ОДИН', 'ДВА', 'ТРИ', 'ЧЕТЫРЕ', 'ПЯТЬ', 'ШЕСТЬ', 'СЕМЬ', 'ВОСЕМЬ', 'ДЕВЯТЬ', 'ДЕСЯТЬ'];
+  for (let i=0; i<digits_alphabetical.length; i++)
+  {
+    s2=s2.replace(digits_alphabetical[i], (i+1).toString());
+  }
+  s2=s2.replace(" ", "");
   if (s2.length===3&&s2.substring(1)==="10")
   {
     y=9;

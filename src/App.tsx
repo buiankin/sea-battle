@@ -326,6 +326,7 @@ export class App extends React.Component<any, any> {
   {
     if (myAction.type==='lets_fire')
     {
+      //alert(myAction.coord_str);
       let fire_registered=false;
       let coord=decodeCoordinate(myAction.coord_str);
       if (coord)
