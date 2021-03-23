@@ -187,7 +187,7 @@ export class App extends React.Component<any, any> {
   constructor(props:any, state:any) {
     super(props);
     this.state=this.getBoardInitialState();
-    this.state={...this.state, character: 'sber'};
+    this.state={...this.state, character: 'sber', respectfulAppeal: true, enemyTurn: false};
 
   }
 
@@ -202,8 +202,10 @@ export class App extends React.Component<any, any> {
     // type='character', character='sber'
     this.assistant?.on('data', ({ type, character, navigation, action }: any) => {
       if (character)
+      {
         // 'sber' | 'eva' | 'joy';
-        this.setState({...this.state, character: character.id});
+        this.setState({...this.state, character: character.id, respectfulAppeal: character.id!=='joy'});
+      }
       //if (navigation)
       if (action)
       {
@@ -325,6 +327,12 @@ export class App extends React.Component<any, any> {
   myDispatch(myAction: any)
   {
     if (myAction.type==='lets_fire')
+    if (this.state.enemyTurn)
+    {
+      // тут про сессии можно почитать
+      // https://developer.sberdevices.ru/docs/ru/developer_tools/ide/JS_API/session_lifetime_control
+      this.assistant?.sendData({ action: { action_id: 'myMove'} });
+    } else
     {
       //alert(myAction.coord_str);
       let fire_registered=false;
@@ -362,7 +370,8 @@ export class App extends React.Component<any, any> {
             //setState({ enemyField: newEnemyField, opponent_board: { ...appState.opponent_board, grid: grid, remaining_hit_points: remaining_hit_points} });
             this.setState({...this.state,
             opponent_board: {grid: grid, remaining_hit_points: this.state.opponent_board.remaining_hit_points-1},
-            enemyField: newEnemyField
+            enemyField: newEnemyField,
+            enemyTurn: true
             });
             if (live_parts>0)
               this.assistant?.sendData({ action: { action_id: 'fireHit', parameters: { coord: myAction.coord_str} } });
@@ -388,7 +397,8 @@ export class App extends React.Component<any, any> {
             //this.setState({ enemyField: newEnemyField, opponent_board: { ...this.state.opponent_board, grid: grid} });
             this.setState({
               ...this.state,
-              opponent_board: { ...this.state.opponent_board, grid: grid}, enemyField: newEnemyField
+              opponent_board: { ...this.state.opponent_board, grid: grid}, enemyField: newEnemyField,
+              enemyTurn: true
             });
           }
           this.assistant?.sendData({ action: { action_id: 'fireMiss', parameters: { coord: myAction.coord_str} } });
@@ -541,6 +551,8 @@ export class App extends React.Component<any, any> {
 
       this.fireMyBoard(alphabetical_coord);
     }
+    // В любом случае ход переходит к игроку
+    this.setState({...this.state, enemyTurn: false});
 /*     if (primary_targets.length>0)
     {
       let idx=getRandomInt(0, primary_targets.length);
@@ -672,7 +684,7 @@ export class App extends React.Component<any, any> {
     return (
       <div id="opponents_board_container">
         <header>
-          <h2>Shooting grid</h2>
+          <h2>Поле для стрельбы</h2>
         </header>
         <OpponentBoard
           //dispatch={dispatch}
@@ -690,6 +702,7 @@ export class App extends React.Component<any, any> {
   }
 
 
+  // 559x568, 768x400, 959x400, 1920x1080
   _renderGameContent() {
     if (this.state.gameOver) return this._renderResult();
 
@@ -699,14 +712,15 @@ export class App extends React.Component<any, any> {
           <Header
           //game={GameShowView}
           //playerId={playerId}
-          //currentTurn={currentTurn}
+          enemyTurn={this.state.enemyTurn}
+          respectfulAppeal={this.state.respectfulAppeal}
           >
           </Header>
         }
         <section id="boards_container">
           <div id="my_board_container">
             <header>
-              <h2>Your ships</h2>
+              <h2>Свои корабли</h2>
             </header>
             <MyBoard
               //dispatch={dispatch}

@@ -15,6 +15,7 @@ export default class Header extends React.Component {
     //const { game, playerId, currentTurn, my_board, opponents_board } = this.props;
     //const { readyForBattle } = game;
     //let readyForBattle=true;
+    const { enemyTurn, respectfulAppeal } = this.props;
 
     /*
 
@@ -30,10 +31,16 @@ export default class Header extends React.Component {
       return 'Let the battle begin';
     }
      */
-    return 'Your turn!';
+    if (enemyTurn===true) {
+      return respectfulAppeal===false?'Ход твоего оппонента!':'Ход Вашего оппонента!';
+    } else {
+      return respectfulAppeal===false?'Твой ход!':'Ваш ход!';
+    }
+    
   }
 
   _messageText() {
+    const { enemyTurn, respectfulAppeal } = this.props;
     /*
     const { game, playerId, currentTurn } = this.props;
     const { my_board, opponents_board, readyForBattle } = game;
@@ -50,7 +57,11 @@ export default class Header extends React.Component {
       return 'Let the battle begin';
     }
      */
-    return 'Let the battle begin';
+    if (enemyTurn===true) {
+      return respectfulAppeal===false?'Ход твоего оппонента!':'Ход Вашего оппонента!';
+    } else {
+      return respectfulAppeal===false?'Твой ход!':'Ваш ход!';
+    }
   }
 
   render() {
