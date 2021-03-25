@@ -187,7 +187,7 @@ export class App extends React.Component<any, any> {
   constructor(props:any, state:any) {
     super(props);
     this.state=this.getBoardInitialState();
-    this.state={...this.state, character: 'sber', respectfulAppeal: true, enemyTurn: false};
+    this.state={...this.state, character: 'sber', respectfulAppeal: true, enemyTurn: false, gameOver: false, youWin: false};
 
   }
 
@@ -368,17 +368,29 @@ export class App extends React.Component<any, any> {
             let grid=this.state.opponent_board.grid.slice();
             grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
             //setState({ enemyField: newEnemyField, opponent_board: { ...appState.opponent_board, grid: grid, remaining_hit_points: remaining_hit_points} });
-            this.setState({...this.state,
-            opponent_board: {grid: grid, remaining_hit_points: this.state.opponent_board.remaining_hit_points-1},
-            enemyField: newEnemyField,
-            enemyTurn: true
-            });
             if (live_parts>0)
               this.assistant?.sendData({ action: { action_id: 'fireHit', parameters: { coord: myAction.coord_str} } });
             else
               this.assistant?.sendData({ action: { action_id: 'fireDone', parameters: { coord: myAction.coord_str} } });
+            if (this.state.opponent_board.remaining_hit_points<=1)
+            {
+              // игрок выиграл
+              this.setState({...this.state,
+                opponent_board: {grid: grid, remaining_hit_points: this.state.opponent_board.remaining_hit_points-1},
+                enemyField: newEnemyField,
+                gameOver: true,
+                youWin: true
+                });
+            } else {
+              // просто очередное попадание, ход не переходит
+              this.setState({...this.state,
+              opponent_board: {grid: grid, remaining_hit_points: this.state.opponent_board.remaining_hit_points-1},
+              enemyField: newEnemyField
+              });
+            }
+
           } else {
-            // Повторное попадание
+            // Повторное попадание. Ход считаем, что не переходит
             this.assistant?.sendData({ action: { action_id: 'fireAgain', parameters: { coord: myAction.coord_str} } });
           }
         } else {
@@ -406,16 +418,19 @@ export class App extends React.Component<any, any> {
       }
 
       // Теперь он сам стреляет
-      setTimeout(() => this.processEnemyMove(), 3000);
+      // (сделано специально, чтобы в любом случае произошла проверка, чтобы игровой процесс не остановился по какой-нибудь причине)
+      setTimeout(() => this.processEnemyMove(), 1200);
 
     }
   }
 
+  // вернет true, если оппонент попал
+  // в этом случае ход не переходит
   fireMyBoard(alphabetical_coord: string)
   {
     const coordinate=decodeCoordinate(alphabetical_coord);
     if (coordinate==null)
-      return;
+      return false;
     const x=coordinate.x;
     const y=coordinate.y;
 
@@ -448,6 +463,7 @@ export class App extends React.Component<any, any> {
         let grid=this.state.my_board.grid.slice();
         grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
         this.setState({ myField: newEnemyField, my_board: { ...this.state.my_board, grid: grid} });
+        return true;
       } else {
         // Повторное попадание
       }
@@ -464,11 +480,16 @@ export class App extends React.Component<any, any> {
         this.setState({ myField: newEnemyField, my_board: { ...this.state.my_board, grid: grid} });
       }
     }
+    return false;
 
   }
 
   processEnemyMove()
   {
+    // только в свой ход
+    if (!this.state.enemyTurn)
+      return;
+
     const offsets=[{x:-1,y:-1}, {x:0,y:-1}, {x:1,y:-1},
       {x:-1,y:0}, {x:0,y:0}, {x:1,y:0},
       {x:-1,y:1}, {x:0,y:1}, {x:1,y:1},
@@ -549,19 +570,26 @@ export class App extends React.Component<any, any> {
       //messages2.push({text: alphabetical_coord, mine: false});
       //this.setState({messages: messages2});
 
-      this.fireMyBoard(alphabetical_coord);
+      if (this.fireMyBoard(alphabetical_coord))
+      {
+        // если попал, проверяем, победа это или запускаем следующий ход оппонента
+        let playerLivesCount=0;
+        for (let y = 0; y < 10; y++) {
+          for (let x = 0; x < 10; x++) {
+            // если туда еще не стреляли
+            if (!field[y][x].shot&&field[y][x].containsShip)
+              playerLivesCount++;
+          }
+        }
+        if (playerLivesCount>0)
+          setTimeout(() => this.processEnemyMove(), 1200);
+        else
+          this.setState({...this.state, gameOver: true, youWin: false});
+        return;
+      }
     }
-    // В любом случае ход переходит к игроку
+    // В остальных случаях ход переходит к игроку
     this.setState({...this.state, enemyTurn: false});
-/*     if (primary_targets.length>0)
-    {
-      let idx=getRandomInt(0, primary_targets.length);
-      let fire_coord=primary_targets[idx];
-    } else
-    {
-
-    }
- */    
   }
 
 
@@ -642,12 +670,9 @@ export class App extends React.Component<any, any> {
   _renderResult() {
 
     //const { game, playerId, winnerId } = this.props;
+    const {youWin} = this.state;
 
-    let playerId = 1;
-    let winnerId = 2;
-
-    const message = playerId === winnerId ? 'Yo Ho Ho, victory is yours!' : 'You got wrecked, landlubber!';
-    const twitterMessage = playerId === winnerId ? 'Yo Ho Ho, I won a battle at Phoenix Battleship' : 'I got wrecked at Phoenix Battleship';
+    const message = youWin ? 'Вы победили!' : 'Вы потерпели крушение, сухопутный!';
 
     //setDocumentTitle(`${message} · #${game.id}`);
 
@@ -655,11 +680,8 @@ export class App extends React.Component<any, any> {
       <div id="game_result">
         <header>
         {/*<Logo/>*/}
-          <h1>Game over</h1>
+          <h1>Игра окончена</h1>
           <p>{message}</p>
-          <a
-            href={`https://twitter.com/intent/tweet?url=https://phoenix-battleship.herokuapp.com&button_hashtag=myelixirstatus&text=${twitterMessage}`}
-            className="twitter-hashtag-button"><i className="fa fa-twitter" /> Share result</a>
         </header>
         {/*<Link to="/">Back to home</Link>*/}
       </div>
