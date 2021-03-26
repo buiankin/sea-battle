@@ -88,7 +88,7 @@ export default class MyBoard extends Board {
     });
   }
 
-  _cellClasses(value) {
+  _cellClasses(value, showHidden) {
     return classnames({
       cell: true,
       ship: value === Constants.GRID_VALUE_SHIP,

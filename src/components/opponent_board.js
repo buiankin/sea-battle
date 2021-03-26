@@ -61,11 +61,11 @@ export default class OpponentBoard extends Board {
     });
   }
 
-  _cellClasses(value) {
+  _cellClasses(value, showHidden) {
     return classnames({
       cell: true,
       // TODO только во время отладки
-      ship: value === Constants.GRID_VALUE_SHIP,
+      ship: showHidden && value === Constants.GRID_VALUE_SHIP,
       //
       hit: value === Constants.GRID_VALUE_SHIP_HIT,
       'water-hit': value === Constants.GRID_VALUE_WATER_HIT,

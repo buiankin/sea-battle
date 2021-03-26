@@ -11,8 +11,9 @@ export default class Board extends React.Component {
     super(props);
   }
 
-  _renderRows(data) {
+  _renderRows(data, showHidden) {
 
+    // showHidden важно только для opponent_board
     const { grid } = data;
 
     let rows = [this._buildRowHeader()];
@@ -23,7 +24,7 @@ export default class Board extends React.Component {
       for (let x = 0; x < 10; x++) {
         //cells.push(this._renderCell(y, x, grid[`${y}${x}`]));
         // 15.02.2021 у нас это не строка 00, 01, 02 и т.д., а двухмерный массив
-        cells.push(this._renderCell(y, x, grid[y][x]));
+        cells.push(this._renderCell(y, x, grid[y][x], showHidden));
       }
 
       rows.push(<div className="row" key={y}>{cells}</div>);
@@ -46,10 +47,10 @@ export default class Board extends React.Component {
     return rows;
   }
 
-  _renderCell(y, x, value) {
+  _renderCell(y, x, value, showHidden) {
     const key = `${y}${x}`;
     const id = this._cellId(key);
-    const classes = this._cellClasses(value);
+    const classes = this._cellClasses(value, showHidden);
 
     return (
       <div
@@ -82,14 +83,14 @@ export default class Board extends React.Component {
 
   render() {
       // 14.02.2012 TODO
-    const { data } = this.props;
+    const { data, showHidden } = this.props;
     //if (!data) return false;
 
     const classes = this._boardClasses();
 
     return (
       <div className={classes}>
-        {this._renderRows(data)}
+        {this._renderRows(data, showHidden)}
       </div>
     );
   }

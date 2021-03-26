@@ -187,14 +187,18 @@ export class App extends React.Component<any, any> {
   constructor(props:any, state:any) {
     super(props);
     this.state=this.getBoardInitialState();
-    this.state={...this.state, character: 'sber', respectfulAppeal: true, enemyTurn: false, gameOver: false, youWin: false};
+    this.state={...this.state, 
+      character: 'sber', respectfulAppeal: true, 
+      enemyTurn: false, gameOver: false, youWin: false,
+      showHidden: false
+    };
 
   }
 
   componentDidMount() {
     // TODO
     try {
-      this.assistant = initializeAssistant(() => this.assistantStateRef.current);
+      //this.assistant = initializeAssistant(() => this.assistantStateRef.current);
     } catch (error) {
       this.assistant = null;
     }
@@ -326,6 +330,12 @@ export class App extends React.Component<any, any> {
   // { type: "lets_fire", coord_str: codeCoordinate(x,y)})
   myDispatch(myAction: any)
   {
+
+    if (myAction.type==='show_ships')
+    {
+      this.setState({...this.state, showHidden: true});
+    }
+
     if (myAction.type==='lets_fire')
     if (this.state.enemyTurn)
     {
@@ -712,6 +722,7 @@ export class App extends React.Component<any, any> {
           //dispatch={dispatch}
           //gameChannel={gameChannel}
           data={this.state.opponent_board}
+          showHidden={this.state.showHidden}
           //playerId={playerId}
           //currentTurn={currentTurn}
           //onClickBoard={() => dispatch({ type: "add_note", note: "123" })}
