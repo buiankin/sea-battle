@@ -68,7 +68,7 @@ export default class Header extends React.Component {
     return (
       <header id="game_header">
         <h1>{this._titleText()}</h1>
-        <p>{this._messageText()}</p>
+        {/*<p>{this._messageText()}</p>*/}
       </header>
     );
   }

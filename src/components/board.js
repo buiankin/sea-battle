@@ -59,8 +59,8 @@ export default class Board extends React.Component {
         key={key}
         onClick={this._handleCellClick(y, x, value)}
         onDoubleClick={(e) => e.preventDefault()}
-        onMouseOver={this._handleCellMouseOver(y, x)}
-        onMouseOut={this._handleCellMouseOut(y, x)}>{this._cellValue(value)}</div>
+        onMouseOver={(y,x)=>this._handleCellMouseOver(y, x)}
+        onMouseOut={(y,x)=>this._handleCellMouseOut(y, x)}>{this._cellValue(value)}</div>
     );
   }
 

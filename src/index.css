@@ -1,3 +1,15 @@
+/*  --min-height: 30dp;
+  --max-height: 30dp; 
+*/
+
+:root {
+  --min_height: 20px;
+  --max_height: 20px;
+  --h1_font: 0.5em;
+  --h2_font: 0.5em;
+  --grid_height: 5vh;
+}
+
 * {
   box-sizing: border-box;
   font-family: sans-serif;
@@ -29,13 +41,34 @@ body {
   text-align: center;
 }
 
+#game_show #iii1 {
+  display:table; width:100%;text-align:center;
+}
+
+#game_show #iii11 {
+  display:table-cell;vertical-align:middle;max-width:49%;text-align:center;
+}
+
+
+#game_show #iii2 {
+  display:table-cell;vertical-align:middle;max-width:49%;text-align:center;
+}
+
+
 #game_show #game_header h1 {
   margin-bottom: 0.01em;
+  display: block;
+  font-size: var(--h1_font);
+  margin-block-start: 0.083em;
+  margin-block-end: 0.083em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+  font-weight: bold;
 }
 
 #game_show #game_header p {
   color: #cfc4db;
-  font-size: 1.2em;
+  font-size: 1.0em;
 }
 
 #game_show #boards_container {
@@ -63,14 +96,21 @@ body {
   cursor: pointer;
 }
 
+/*
+  min-height: var(--min_height);
+  max-height: var(--min_height);
+*/
+
+
 #game_show #boards_container .grid .row {
   flex: 1;
   display: flex;
-  min-height: 40px;
+  min-height: var(--grid_height);
+  max-height: var(--grid_height);
 }
 
+/* тут был flex: 1*/
 #game_show #boards_container .grid .row > .cell {
-  flex: 1;
   border-color: #656569;
   border-style: solid;
   border-width: 1px;
@@ -79,6 +119,8 @@ body {
   justify-content: center;
   border-radius: 3px;
   overflow: hidden;
+  width: var(--grid_height);
+
 }
 
 #game_show #boards_container .grid .row > .cell:not(.header) {
@@ -117,6 +159,7 @@ body {
 
 #game_show #boards_container .grid .row > .cell.header {
   border: 0px none;
+  font-size: var(--h2_font);
 }
 
 #game_show #boards_container .grid .row:nth-child(2) > .cell {
@@ -137,8 +180,15 @@ body {
   text-align: center;
 }
 
-#game_show #boards_container #opponents_board_container header h2 {
-  color: #362b42;
+#game_show header h2 {
+  /*color: #362b42;*/
+
+  display: block;
+  font-size: var(--h1_font);
+  margin-block-start: 0.083em;
+  margin-block-end: 0.083em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
 }
 
 #game_show #boards_container #opponents_board_container .grid.pointer .cell {
@@ -147,6 +197,7 @@ body {
 
 #game_show #boards_container #opponents_board_container p {
   text-align: right;
+  font-size: var(--h2_font);
 }
 
 #game_show #boards_container #my_board_container {
@@ -166,10 +217,6 @@ body {
 
 #game_show #boards_container #my_board_container header {
   text-align: center;
-}
-
-#game_show #boards_container #my_board_container header h2 {
-  color: #362b42;
 }
 
 #game_show #boards_container #ship_selector {
@@ -345,6 +392,7 @@ body {
   font-size: 3em;
   line-height: 1.3em;
   color: #362b42;
+  
 }
 
 #game_result p {
