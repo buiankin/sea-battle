@@ -715,6 +715,7 @@ export class App extends React.Component<any, any> {
 
     return (
       <div id="opponents_board_container">
+        <header><h2>Поле для стрельбы</h2></header>        
         <OpponentBoard
           //dispatch={dispatch}
           //gameChannel={gameChannel}
@@ -747,16 +748,9 @@ export class App extends React.Component<any, any> {
           >
           </Header>
         }
-      <div id="iii1">
-        <div id="iii11">
-          <header><h2>Свои корабли</h2></header>
-        </div>
-        <div id="iii2">
-          <header><h2>Поле для стрельбы</h2></header>
-        </div>
-      </div>        
         <section id="boards_container">
           <div id="my_board_container">
+            <header><h2>Свои корабли</h2></header>
             <MyBoard
               //dispatch={dispatch}
               //gameChannel={gameChannel}

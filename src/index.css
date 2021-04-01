@@ -3,12 +3,47 @@
 */
 
 :root {
-  --min_height: 20px;
-  --max_height: 20px;
+  --min_height: 4vh;
+  --max_height: 4vh;
   --h1_font: 0.5em;
   --h2_font: 0.5em;
-  --grid_height: 5vh;
+  --grid_height: 4vh;
+
+
 }
+
+/*@media screen and (orientation: portrait)*/
+@media screen and (max-aspect-ratio: 291/731)
+{
+  :root {
+    /*--test_color: #362b42;*/
+
+    --min_height: 7vw;
+    --max_height: 7vw;
+    --h1_font: 0.5em;
+    --h2_font: 0.5em;
+    --grid_height: 7vw;
+  }
+}
+
+/*@media screen and (orientation: portrait)*/
+@media screen and (max-aspect-ratio: 925/762) and (min-aspect-ratio: 291/731)
+{
+  :root {
+    /*--test_color: #c42f61;*/
+
+    --min_height: 3vh;
+    --max_height: 3vh;
+    --h1_font: 0.5em;
+    --h2_font: 0.5em;
+    --grid_height: 3vh;
+  }
+}
+
+
+
+
+
 
 * {
   box-sizing: border-box;
@@ -25,7 +60,7 @@ body {
   display: flex;
   flex: 1;
   width: 100%;
-  height: 100vh;
+  height: calc(100vh-3px);
   flex-direction: row;
   flex-wrap: wrap;
 }
@@ -39,19 +74,6 @@ body {
 #game_show #game_header {
   padding: 0.01em;
   text-align: center;
-}
-
-#game_show #iii1 {
-  display:table; width:100%;text-align:center;
-}
-
-#game_show #iii11 {
-  display:table-cell;vertical-align:middle;max-width:49%;text-align:center;
-}
-
-
-#game_show #iii2 {
-  display:table-cell;vertical-align:middle;max-width:49%;text-align:center;
 }
 
 
@@ -180,16 +202,15 @@ body {
   text-align: center;
 }
 
-#game_show header h2 {
+#game_show #boards_container #opponents_board_container header h2 {
   /*color: #362b42;*/
-
-  display: block;
+  color: var(--test_color);
+  text-align: left;
   font-size: var(--h1_font);
-  margin-block-start: 0.083em;
-  margin-block-end: 0.083em;
-  margin-inline-start: 0px;
-  margin-inline-end: 0px;
+
 }
+
+
 
 #game_show #boards_container #opponents_board_container .grid.pointer .cell {
   cursor: crosshair;
@@ -200,10 +221,11 @@ body {
   font-size: var(--h2_font);
 }
 
+/*  max-width: 50%; */
+
 #game_show #boards_container #my_board_container {
   flex: 1;
   flex-direction: column;
-  max-width: 50%;
   padding: 0.075em;
 }
 
@@ -218,6 +240,22 @@ body {
 #game_show #boards_container #my_board_container header {
   text-align: center;
 }
+
+#game_show #boards_container #my_board_container header h2 {
+  /*color: #362b42;*/
+  text-align: left;
+  font-size: var(--h1_font);
+  /*
+  display: block;
+  font-size: var(--h1_font);
+  margin-block-start: 0.083em;
+  margin-block-end: 0.083em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+  */
+}
+
+
 
 #game_show #boards_container #ship_selector {
   padding: 0.075em;
