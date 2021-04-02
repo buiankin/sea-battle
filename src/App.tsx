@@ -198,7 +198,7 @@ export class App extends React.Component<any, any> {
   componentDidMount() {
     // TODO
     try {
-      //this.assistant = initializeAssistant(() => this.assistantStateRef.current);
+      this.assistant = initializeAssistant(() => this.assistantStateRef.current);
     } catch (error) {
       this.assistant = null;
     }
