@@ -53,7 +53,8 @@ export function placeVarious()
     let variableSet = [];
     // i-порядок расстановки (оно же количество короблей такой длины)
     // и соответственно длина на каждом уровне  5-i
-    for (let i=1; i<=4; i++)
+    //for (let i=1; i<=4; i++)
+    for (let i=1; i<=1; i++)
     {
         for (let j=1; j<=i; j++)
         {

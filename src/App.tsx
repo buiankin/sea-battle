@@ -336,6 +336,26 @@ export class App extends React.Component<any, any> {
       this.setState({...this.state, showHidden: true});
     }
 
+    if (myAction.type==='game_over_lost')
+    {
+      this.setState({...this.state, gameOver: true, youWin: false
+      });
+    }
+
+    if (myAction.type==='game_replay')
+    {
+      // тот же код, что при иннициализации
+      this.state=this.getBoardInitialState();
+      // кроме установки персонажа
+      this.setState({...this.state, 
+        enemyTurn: false, gameOver: false, youWin: false,
+        showHidden: false
+      });
+
+    }
+
+
+
     if (myAction.type==='lets_fire')
     if (this.state.enemyTurn)
     {
@@ -391,6 +411,7 @@ export class App extends React.Component<any, any> {
                 gameOver: true,
                 youWin: true
                 });
+                this.assistant?.sendData({ action: { action_id: 'gameOverWin', parameters: {} } });
             } else {
               // просто очередное попадание, ход не переходит
               this.setState({...this.state,
@@ -594,7 +615,10 @@ export class App extends React.Component<any, any> {
         if (playerLivesCount>0)
           setTimeout(() => this.processEnemyMove(), 1200);
         else
+        {
           this.setState({...this.state, gameOver: true, youWin: false});
+          this.assistant?.sendData({ action: { action_id: 'gameOverLost', parameters: {} } });
+        }
         return;
       }
     }
