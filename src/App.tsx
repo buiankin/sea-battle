@@ -102,275 +102,195 @@ const initializeAssistant = (getState: any) => {
   return createAssistant({ getState });
 };
 
+function getBoardInitialState()
+{
+  let initial_myField = Array(0);
+  let myShips = placeVarious();
+
+  let initial_enemyField = Array(0);
+  let enemyShips = placeVarious();
 
 
+  // первоначальное (пустое) состояние поля
+  //for (let i = 0; i < 10; i++) {
+  //  initial_myField.push([]);
+  //  initial_enemyField.push([]);
+  //}
 
-function handleClickOpponentBoard(x: any, y: any) {
-  // TODO
-  //alert('You fire ' + x + "/" + y);
-  //this.state.opponent_board.grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
+  for (let i = 0; i < 10; i++) {
+    let val_in_line = [];
+    let enemy_val_in_line = [];
 
-  /*
+    for (let j = 0; j < 10; j++) {
+      val_in_line.push({
+        x: j,
+        y: i,
+        containsShip: false,
+        shot: false,
+        isShipVisible: false,
+        shipId: null,
+      });
 
-  const alphabetical_coord=this.codeCoordinate(x, y);
-
-  let messages2 = [...this.state.messages];
-  messages2.push({text: alphabetical_coord, mine: true});
-  this.setState({messages: messages2});
-
-  let fire_registered=false;
-
-  let field=this.state.enemyField[y][x];
-  if (field.containsShip)
-  {
-    // Попали в корабль
-    if (!field.shot)
-    {
-      // До этого в это поле не попадали
-      fire_registered=true;
-      let newEnemyField=this.state.enemyField.slice();
-      newEnemyField[y][x].shot=true;
-      let shipId=field.shipId;
-      // Проверим, есть ли еще не подбитые его части
-      let live_parts=0;
-      for (let y = 0; y < 10; y++) {
-        for (let x = 0; x < 10; x++) {
-          if (newEnemyField[y][x].containsShip && newEnemyField[y][x].shipId===shipId)
-          {
-            if (!newEnemyField[y][x].shot)
-              live_parts++;
-          }
-        }
-      }
-      // TODO если корабль полностью подбит, рисовать его как-то по-другому
-  
-      let grid=this.state.opponent_board.grid.slice();
-      grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
-      let remaining_hit_points=this.state.opponent_board.remaining_hit_points;
-      remaining_hit_points--;
-      this.setState({ enemyField: newEnemyField, opponent_board: { ...this.state.opponent_board, grid: grid, remaining_hit_points: remaining_hit_points} });
-    } else {
-      // Повторное попадание
+      enemy_val_in_line.push({
+        x: j,
+        y: i,
+        containsShip: false,
+        shot: false,
+        isShipVisible: false,
+        shipId: null,
+      });
     }
-  } else {
-    // Попали в воду
-    let grid=this.state.opponent_board.grid.slice();
-    if (grid[y][x] === Constants.GRID_VALUE_WATER)
-    {
-      // До этого туда не стреляли
-      fire_registered=true;
-      // хотя это бы и не обязательно делать (заполнять enemyField для воды), все равно попадание у нас контролируется по-другому,
-      // но для корректности данных лучше так сделать
-      let newEnemyField=this.state.enemyField.slice();
-      newEnemyField[y][x].shot=true;
-      //
-      grid[y][x] = Constants.GRID_VALUE_WATER_HIT;
-      this.setState({ enemyField: newEnemyField, opponent_board: { ...this.state.opponent_board, grid: grid} });
-    }
+
+    initial_myField.push(val_in_line);
+    initial_enemyField.push(enemy_val_in_line);
   }
 
-  //if (fire_registered)
-  // this.processEnemyMove();
-  */
+    // расставляем стандартный набор кораблей
+    myShips.forEach((ship: any) => {
+      placeShip(initial_myField, ship)
+    });
+    enemyShips.forEach((ship0: any) => {
+      placeShip(initial_enemyField, ship0)
+    });
+
+
+  let my_grid = [];
+  let enemy_grid = [];
+
+  // Заполняем из наших массивов
+  let remaining_hit_points = 0;
+  for (let y = 0; y < 10; y++) {
+    let my_line = [];
+    let enemy_line = [];
+    for (let x = 0; x < 10; x++) {
+      // Наши корабли
+      let fieldVal = initial_myField[y][x];
+      let fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
+      if (fieldVal.containsShip)
+        fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
+      my_line.push(fieldVal_0);
+      // Корабли оппонента
+      fieldVal = initial_enemyField[y][x];
+      fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
+      if (fieldVal.containsShip) {
+        fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
+        remaining_hit_points++;
+      }
+      enemy_line.push(fieldVal_0);
+    }
+
+    my_grid.push(my_line);
+    enemy_grid.push(enemy_line);
+
+  }
+
+  let initial_my_board = { grid: my_grid };
+  let initial_opponent_board = { grid: enemy_grid, remaining_hit_points};
+
+  return {
+    //notes: [],
+    my_board: initial_my_board,
+    myField: initial_myField,
+    opponent_board: initial_opponent_board,
+    enemyField: initial_enemyField
+  };
+
 }
 
-export class App extends React.Component<any, any> {
+function getFullInitialState()
+{
+  let boardInitialState=getBoardInitialState();
+  let state={
+    my_board: boardInitialState.my_board,
+    myField: boardInitialState.myField,
+    opponent_board: boardInitialState.opponent_board,
+    enemyField: boardInitialState.enemyField,
+    character: 'sber',
+    respectfulAppeal: true, 
+    enemyTurn: false, gameOver: false, youWin: false,
+    showHidden: false
+  };
+  return state;
+}
 
-  //assistantRef = React.createRef<ReturnType<typeof createAssistant>>();
-  //assistantRef = React.createRef<AssistantSmartAppData>();
-  //private assistantRef :RefObject<ReturnType<typeof createAssistant>>;
-  private assistant :any = null;
-  
-  assistantStateRef = React.createRef<AssistantAppState>();
-  //assistant: AssistantAppState=null;
+export const App: FC = memo(() => {
+  //const [appState, dispatch] = useReducer(reducer, { notes: [] });
+  //const [note, setNote] = useState("");
+  const [appState, setAppState] = useState(getFullInitialState());
 
-  constructor(props:any, state:any) {
-    super(props);
-    this.state=this.getBoardInitialState();
-    this.state={...this.state, 
-      character: 'sber', respectfulAppeal: true, 
-      enemyTurn: false, gameOver: false, youWin: false,
-      showHidden: false
-    };
+  const assistantStateRef = useRef<AssistantAppState>();
+  const assistantRef = useRef<ReturnType<typeof createAssistant>>();
 
-  }
+  useEffect(() => {
 
-  componentDidMount() {
-    // TODO
-    try {
-      this.assistant = initializeAssistant(() => this.assistantStateRef.current);
-    } catch (error) {
-      this.assistant = null;
-    }
+    assistantRef.current = initializeAssistant(() => assistantStateRef.current);
 
-    // type='character', character='sber'
-    this.assistant?.on('data', ({ type, character, navigation, action }: any) => {
-      if (character)
-      {
-        // 'sber' | 'eva' | 'joy';
-        this.setState({...this.state, character: character.id, respectfulAppeal: character.id!=='joy'});
+    assistantRef.current.on("data", ({ action }: any) => {
+      if (action) {
+        //dispatch(action);
       }
-      //if (navigation)
-      if (action)
-      {
-        /*
-        if (action.type==='lets_fire')
-        {
-          let coord=decodeCoordinate(action.coord_str);
-          if (coord)
-          {
-          }
-        }
+    });
+  }, []);
+
+  useEffect(() => {
+    assistantStateRef.current = {
+      gameOver: appState.gameOver
+      /*
+      item_selector: {
+        items: appState.notes.map(({ id, title }, index) => ({
+          number: index + 1,
+          id,
+          title,
+        })),
+      },
         */
-       this.myDispatch(action);
-      }
-  });
-
-
-  }
-
-  componentDidUpdate(oldProps: any) {
-  }
-  
-  getBoardInitialState()
-  {
-    let initial_myField = Array(0);
-    let myShips = placeVarious();
-  
-    let initial_enemyField = Array(0);
-    let enemyShips = placeVarious();
-  
-  
-    // первоначальное (пустое) состояние поля
-    //for (let i = 0; i < 10; i++) {
-    //  initial_myField.push([]);
-    //  initial_enemyField.push([]);
-    //}
-  
-    for (let i = 0; i < 10; i++) {
-      let val_in_line = [];
-      let enemy_val_in_line = [];
-  
-      for (let j = 0; j < 10; j++) {
-        val_in_line.push({
-          x: j,
-          y: i,
-          containsShip: false,
-          shot: false,
-          isShipVisible: false,
-          shipId: null,
-        });
-  
-        enemy_val_in_line.push({
-          x: j,
-          y: i,
-          containsShip: false,
-          shot: false,
-          isShipVisible: false,
-          shipId: null,
-        });
-      }
-  
-      initial_myField.push(val_in_line);
-      initial_enemyField.push(enemy_val_in_line);
-    }
-  
-      // расставляем стандартный набор кораблей
-      myShips.forEach((ship: any) => {
-        placeShip(initial_myField, ship)
-      });
-      enemyShips.forEach((ship0: any) => {
-        placeShip(initial_enemyField, ship0)
-      });
-  
-  
-    let my_grid = [];
-    let enemy_grid = [];
-  
-    // Заполняем из наших массивов
-    let remaining_hit_points = 0;
-    for (let y = 0; y < 10; y++) {
-      let my_line = [];
-      let enemy_line = [];
-      for (let x = 0; x < 10; x++) {
-        // Наши корабли
-        let fieldVal = initial_myField[y][x];
-        let fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
-        if (fieldVal.containsShip)
-          fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
-        my_line.push(fieldVal_0);
-        // Корабли оппонента
-        fieldVal = initial_enemyField[y][x];
-        fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
-        if (fieldVal.containsShip) {
-          fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
-          remaining_hit_points++;
-        }
-        enemy_line.push(fieldVal_0);
-      }
-  
-      my_grid.push(my_line);
-      enemy_grid.push(enemy_line);
-  
-    }
-  
-    let initial_my_board = { grid: my_grid };
-    let initial_opponent_board = { grid: enemy_grid, remaining_hit_points};
-  
-    return {
-      notes: [],
-      my_board: initial_my_board,
-      myField: initial_myField,
-      opponent_board: initial_opponent_board,
-      enemyField: initial_enemyField
     };
+  }, [appState]);
 
-  }
+  useEffect(() => {
+    if (appState.enemyTurn)
+    {
+      // TODO тест передаем ход игроку
+      setAppState({...appState, enemyTurn: false});
+    }
+  }, [appState.enemyTurn]);
+
+
+
+
 
   // { type: "lets_fire", coord_str: codeCoordinate(x,y)})
-  myDispatch(myAction: any)
+  function myDispatch(myAction: any)
   {
 
     if (myAction.type==='show_ships')
     {
-      this.setState({...this.state, showHidden: true});
-      // Передача текущего состояния в смартап
-      if (this.assistantStateRef.current)
-      {
-        this.assistantStateRef.current.value.state={
-          //gameOver: this.state.gameOver
-          gameOver: true
-        };
-      }
-
+      setAppState({...appState, showHidden: true});
     }
 
     if (myAction.type==='game_over_lost')
     {
-      this.setState({...this.state, gameOver: true, youWin: false
+      setAppState({...appState, gameOver: true, youWin: false
       });
     }
 
     if (myAction.type==='game_replay')
     {
       // тот же код, что при иннициализации
-      this.state=this.getBoardInitialState();
       // кроме установки персонажа
-      this.setState({...this.state, 
-        enemyTurn: false, gameOver: false, youWin: false,
-        showHidden: false
-      });
-
+      let newAppState=getFullInitialState();
+      newAppState.character=appState.character;
+      newAppState.respectfulAppeal=appState.respectfulAppeal;
+      setAppState(newAppState);
     }
 
 
-
     if (myAction.type==='lets_fire')
-    if (this.state.enemyTurn)
+    if (appState.enemyTurn)
     {
       // тут про сессии можно почитать
       // https://developer.sberdevices.ru/docs/ru/developer_tools/ide/JS_API/session_lifetime_control
-      this.assistant?.sendData({ action: { action_id: 'myMove'} });
+      assistantRef.current?.sendData({ action: { action_id: 'myMove'} });
     } else
     {
       //alert(myAction.coord_str);
@@ -380,7 +300,7 @@ export class App extends React.Component<any, any> {
       {
         let x=coord.x, y=coord.y;
 
-        let field=this.state.enemyField[y][x];
+        let field=appState.enemyField[y][x];
         if (field.containsShip)
         {
           // Попали в корабль
@@ -388,7 +308,7 @@ export class App extends React.Component<any, any> {
           {
             // До этого в это поле не попадали
             fire_registered=true;
-            let newEnemyField=this.state.enemyField.slice();
+            let newEnemyField=appState.enemyField.slice();
             newEnemyField[y][x].shot=true;
             let shipId=field.shipId;
             // Проверим, есть ли еще не подбитые его части
@@ -404,69 +324,68 @@ export class App extends React.Component<any, any> {
             }
             // TODO если корабль полностью подбит, рисовать его как-то по-другому
         
-            let grid=this.state.opponent_board.grid.slice();
+            let grid=appState.opponent_board.grid.slice();
             grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
             //setState({ enemyField: newEnemyField, opponent_board: { ...appState.opponent_board, grid: grid, remaining_hit_points: remaining_hit_points} });
             if (live_parts>0)
-              this.assistant?.sendData({ action: { action_id: 'fireHit', parameters: { coord: myAction.coord_str} } });
+              assistantRef.current?.sendData({ action: { action_id: 'fireHit', parameters: { coord: myAction.coord_str} } });
             else
-              this.assistant?.sendData({ action: { action_id: 'fireDone', parameters: { coord: myAction.coord_str} } });
-            if (this.state.opponent_board.remaining_hit_points<=1)
+            assistantRef.current?.sendData({ action: { action_id: 'fireDone', parameters: { coord: myAction.coord_str} } });
+            if (appState.opponent_board.remaining_hit_points<=1)
             {
               // игрок выиграл
-              this.setState({...this.state,
-                opponent_board: {grid: grid, remaining_hit_points: this.state.opponent_board.remaining_hit_points-1},
+              setAppState({...appState,
+                opponent_board: {grid: grid, remaining_hit_points: appState.opponent_board.remaining_hit_points-1},
                 enemyField: newEnemyField,
                 gameOver: true,
                 youWin: true
                 });
-                this.assistant?.sendData({ action: { action_id: 'gameOverWin', parameters: {} } });
+                assistantRef.current?.sendData({ action: { action_id: 'gameOverWin', parameters: {} } });
             } else {
               // просто очередное попадание, ход не переходит
-              this.setState({...this.state,
-              opponent_board: {grid: grid, remaining_hit_points: this.state.opponent_board.remaining_hit_points-1},
+              setAppState({...appState,
+              opponent_board: {grid: grid, remaining_hit_points: appState.opponent_board.remaining_hit_points-1},
               enemyField: newEnemyField
               });
             }
 
           } else {
             // Повторное попадание. Ход считаем, что не переходит
-            this.assistant?.sendData({ action: { action_id: 'fireAgain', parameters: { coord: myAction.coord_str} } });
+            assistantRef.current?.sendData({ action: { action_id: 'fireAgain', parameters: { coord: myAction.coord_str} } });
           }
         } else {
           // Попали в воду
-          let grid=this.state.opponent_board.grid.slice();
+          let grid=appState.opponent_board.grid.slice();
           if (grid[y][x] === Constants.GRID_VALUE_WATER)
           {
             // До этого туда не стреляли
             fire_registered=true;
             // хотя это бы и не обязательно делать (заполнять enemyField для воды), все равно попадание у нас контролируется по-другому,
             // но для корректности данных лучше так сделать
-            let newEnemyField=this.state.enemyField.slice();
+            let newEnemyField=appState.enemyField.slice();
             newEnemyField[y][x].shot=true;
             //
             grid[y][x] = Constants.GRID_VALUE_WATER_HIT;
             //this.setState({ enemyField: newEnemyField, opponent_board: { ...this.state.opponent_board, grid: grid} });
-            this.setState({
-              ...this.state,
-              opponent_board: { ...this.state.opponent_board, grid: grid}, enemyField: newEnemyField,
+            setAppState({...appState,
+              opponent_board: { ...appState.opponent_board, grid: grid}, enemyField: newEnemyField,
               enemyTurn: true
             });
           }
-          this.assistant?.sendData({ action: { action_id: 'fireMiss', parameters: { coord: myAction.coord_str} } });
+          assistantRef.current?.sendData({ action: { action_id: 'fireMiss', parameters: { coord: myAction.coord_str} } });
         }
       }
 
       // Теперь он сам стреляет
       // (сделано специально, чтобы в любом случае произошла проверка, чтобы игровой процесс не остановился по какой-нибудь причине)
-      setTimeout(() => this.processEnemyMove(), 1200);
+      //setTimeout(() => processEnemyMove(), 1200);
 
     }
   }
 
   // вернет true, если оппонент попал
   // в этом случае ход не переходит
-  fireMyBoard(alphabetical_coord: string)
+  function fireMyBoard(alphabetical_coord: string)
   {
     const coordinate=decodeCoordinate(alphabetical_coord);
     if (coordinate==null)
@@ -476,7 +395,7 @@ export class App extends React.Component<any, any> {
 
     let fire_registered=false;
 
-    let field=this.state.myField[y][x];
+    let field=appState.myField[y][x];
     if (field.containsShip)
     {
       // Попали в корабль
@@ -484,7 +403,7 @@ export class App extends React.Component<any, any> {
       {
         // До этого в это поле не попадали
         fire_registered=true;
-        let newEnemyField=this.state.myField.slice();
+        let newEnemyField=appState.myField.slice();
         newEnemyField[y][x].shot=true;
         let shipId=field.shipId;
         // Проверим, есть ли еще не подбитые его части
@@ -500,34 +419,34 @@ export class App extends React.Component<any, any> {
         }
         // TODO если корабль полностью подбит, рисовать его как-то по-другому
     
-        let grid=this.state.my_board.grid.slice();
+        let grid=appState.my_board.grid.slice();
         grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
-        this.setState({ myField: newEnemyField, my_board: { ...this.state.my_board, grid: grid} });
+        setAppState({...appState, myField: newEnemyField, my_board: { ...appState.my_board, grid: grid} });
         return true;
       } else {
         // Повторное попадание
       }
     } else {
       // Попали в воду
-      let grid=this.state.my_board.grid.slice();
+      let grid=appState.my_board.grid.slice();
       if (grid[y][x] === Constants.GRID_VALUE_WATER)
       {
         // До этого туда не стреляли
         fire_registered=true;
-        let newEnemyField=this.state.myField.slice();
+        let newEnemyField=appState.myField.slice();
         newEnemyField[y][x].shot=true;
         grid[y][x] = Constants.GRID_VALUE_WATER_HIT;
-        this.setState({ myField: newEnemyField, my_board: { ...this.state.my_board, grid: grid} });
+        setAppState({...appState, myField: newEnemyField, my_board: { ...appState.my_board, grid: grid} });
       }
     }
     return false;
 
   }
 
-  processEnemyMove()
+  function processEnemyMove()
   {
     // только в свой ход
-    if (!this.state.enemyTurn)
+    if (!appState.enemyTurn)
       return;
 
     const offsets=[{x:-1,y:-1}, {x:0,y:-1}, {x:1,y:-1},
@@ -537,7 +456,7 @@ export class App extends React.Component<any, any> {
 
     const offsets4=[{x:0,y:-1},{x:-1,y:0},{x:1,y:0},{x:0,y:1}];
 
-    let field=this.state.myField;
+    let field=appState.myField;
     // Первый проход, ищем точки, где рядом есть с попаданиями
     // они будут иметь признак первичных
     // а уже на втором проходе будет происходить поиск, куда можно в принципе выстрелить
@@ -610,7 +529,7 @@ export class App extends React.Component<any, any> {
       //messages2.push({text: alphabetical_coord, mine: false});
       //this.setState({messages: messages2});
 
-      if (this.fireMyBoard(alphabetical_coord))
+      if (fireMyBoard(alphabetical_coord))
       {
         // если попал, проверяем, победа это или запускаем следующий ход оппонента
         let playerLivesCount=0;
@@ -621,103 +540,46 @@ export class App extends React.Component<any, any> {
               playerLivesCount++;
           }
         }
-        if (playerLivesCount>0)
-          setTimeout(() => this.processEnemyMove(), 1200);
-        else
+        //if (playerLivesCount>0)
+          //setTimeout(() => processEnemyMove(), 1200);
+        //else
+        if (playerLivesCount===0)
         {
-          this.setState({...this.state, gameOver: true, youWin: false});
-          this.assistant?.sendData({ action: { action_id: 'gameOverLost', parameters: {} } });
+          setAppState({...appState, gameOver: true, youWin: false});
+          assistantRef.current?.sendData({ action: { action_id: 'gameOverLost', parameters: {} } });
         }
         return;
       }
     }
     // В остальных случаях ход переходит к игроку
-    this.setState({...this.state, enemyTurn: false});
+    setAppState({...appState, enemyTurn: false});
   }
 
 
-  /*
 
-  const [character, setCharacter] = useState('sber' as AssistantCharacterType);
 
-  const [note, setNote] = useState("");
 
-  const [gameOver, setGameOver] = useState(false);
 
-  const [appState, dispatch] = useReducer(reducer, initialState );
 
-  
-  const assistantStateRef = useRef<AssistantAppState>();
-  const assistantRef = useRef<ReturnType<typeof createAssistant>>();
 
-  useEffect(() => {
 
-    dispatch({ type: "init"});
 
-    assistantRef.current = initializeAssistant(() => assistantStateRef.current);
-    // type='character', character='sber'
-    assistantRef.current.on('data', ({ type, character, navigation, action }: any) => {
-      if (character)
-        // 'sber' | 'eva' | 'joy';
-        setCharacter(character.id);
-      //if (navigation)
-      if (action)
-      {
-        if (action.type==='lets_fire')
-        {
-          let coord=decodeCoordinate(action.coord_str);
-          if (coord)
-          {
-          }
-        }
-        dispatch(action);
-      }
-  });
-}, []);
-    // assistantRef.current.on("data", ({ type, character, action }: any) => {
-    assistantRef.current.on("data", ({ action }: any) => {
-      if (action) {
-        dispatch(action);
-        // TODO Тест
-        if (action.type==='lets_fire')
-        {
-          let coord=decodeCoordinate(action.coord_str);
-          if (coord)
-          {
-            // Тут он скажет, что попал
-            doneNote("Test!!!!");
 
-        
-          }
-        }
-      }
-    });
 
-  }, []);
 
-  // Здесь была передача текущего состояния в смартап
-  useEffect(() => {
-    assistantStateRef.current = {
-      item_selector: {
-        items: appState.notes.map(({ id, title }, index) => ({
-          number: index + 1,
-          id,
-          title,
-        })),
-      },
-    };
-  }, [appState]);
-  */
 
-  _renderResult() {
+
+
+
+  function _renderResult() {
 
     //const { game, playerId, winnerId } = this.props;
-    const {youWin} = this.state;
-
+    const {youWin} = appState;
+  
     const message = youWin ? 'Вы победили!' : 'Вы потерпели крушение, сухопутный!';
-
+  
     //setDocumentTitle(`${message} · #${game.id}`);
-
+  
     return (
       <div id="game_result">
         <header>
@@ -729,10 +591,10 @@ export class App extends React.Component<any, any> {
       </div>
     );
   }
-
-  _renderOpponentBoard() {
+  
+  function _renderOpponentBoard() {
     //const { dispatch, game, gameChannel, playerId, currentTurn, readyForBattle } = this.props;
-
+  
     /*
     if (!readyForBattle) return (
         <Instructions
@@ -740,43 +602,44 @@ export class App extends React.Component<any, any> {
             playerIsAttacker={playerId === game.attacker}/>
     );
      */
-
+  
     //const opponentBoard = this.state.opponent_board_0;
     // а вот через data к ним можно бы обратиться только внутри OpponentBoard
-    const remaining_hit_points = this.state.opponent_board.remaining_hit_points;
-
+    const remaining_hit_points = appState.opponent_board.remaining_hit_points;
+  
     return (
       <div id="opponents_board_container">
         <header><h2>Поле для стрельбы</h2></header>        
         <OpponentBoard
           //dispatch={dispatch}
           //gameChannel={gameChannel}
-          data={this.state.opponent_board}
-          showHidden={this.state.showHidden}
+          data={appState.opponent_board}
+          showHidden={appState.showHidden}
           //playerId={playerId}
           //currentTurn={currentTurn}
           //onClickBoard={() => dispatch({ type: "add_note", note: "123" })}
-          onClickBoard={(x:any, y:any) => this.myDispatch({ type: "lets_fire", coord_str: codeCoordinate(x,y)})}
+          // TODO
+          onClickBoard={(x:any, y:any) => myDispatch({ type: "lets_fire", coord_str: codeCoordinate(x,y)})}
         />
         <p>Попаданий до победы: {remaining_hit_points}</p>
       </div>
     );
-
+  
   }
-
-
+  
+  
   // 559x568, 768x400, 959x400, 1920x1080
-  _renderGameContent() {
-    if (this.state.gameOver) return this._renderResult();
-
+  function _renderGameContent() {
+    if (appState.gameOver) return _renderResult();
+  
     return (
       <section id="main_section">
         {
           <Header
           //game={GameShowView}
           //playerId={playerId}
-          enemyTurn={this.state.enemyTurn}
-          respectfulAppeal={this.state.respectfulAppeal}
+          enemyTurn={appState.enemyTurn}
+          respectfulAppeal={appState.respectfulAppeal}
           >
           </Header>
         }
@@ -787,32 +650,33 @@ export class App extends React.Component<any, any> {
               //dispatch={dispatch}
               //gameChannel={gameChannel}
               //selectedShip={selectedShip}
-              data={this.state.my_board}
+              data={appState.my_board}
             />
           </div>
           {
-            this._renderOpponentBoard()
+            _renderOpponentBoard()
           }
         </section>
       </section>
     );
-
+  
   }
-
-  // done в оригинале
-  //const doneNote = (title: string) => {
-  //  assistantRef.current?.sendData({ action: { action_id: 'fireHit', parameters: { title } } });
-//};
+  
 
 
-render() {
+
+
+
+
+
+
   return (
     <AppStyled>
     {/* Используем глобальные react-компоненты один раз */}
     <TypoScale />
     <DocStyles />
     {(() => {
-                switch (this.state.character) {
+                switch (appState.character) {
                     case 'sber':
                         return <ThemeBackgroundSber />;
                     case 'eva':
@@ -826,7 +690,7 @@ render() {
     {/*<Theme />*/}
     {/*<Button onClick={() => doneNote("Test!")}>Normal Button</Button>*/}
     <main id="game_show" className="view-container">
-      {this._renderGameContent()}
+      {_renderGameContent()}
       {/*
       <form
         onSubmit={(event) => {
@@ -871,6 +735,4 @@ render() {
     </main>
     </AppStyled>
   );
-}
-}
-
+});
