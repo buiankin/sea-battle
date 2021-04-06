@@ -33,7 +33,7 @@ import placeVarious from './utils/standardShipsSet';
 //import './App.css';
 
 import { getRandomInt, codeCoordinate, decodeCoordinate} from './utils/Common';
-import { ContextApp, initialState, reducer } from "./store";
+import { initialState, reducer } from "./store";
 
 // createGlobalStyle нужен для создания глобальных стилей
 import styled, { createGlobalStyle, css } from 'styled-components';
@@ -102,132 +102,31 @@ const initializeAssistant = (getState: any) => {
   return createAssistant({ getState });
 };
 
-function getBoardInitialState()
-{
-  let initial_myField = Array(0);
-  let myShips = placeVarious();
-
-  let initial_enemyField = Array(0);
-  let enemyShips = placeVarious();
-
-
-  // первоначальное (пустое) состояние поля
-  //for (let i = 0; i < 10; i++) {
-  //  initial_myField.push([]);
-  //  initial_enemyField.push([]);
-  //}
-
-  for (let i = 0; i < 10; i++) {
-    let val_in_line = [];
-    let enemy_val_in_line = [];
-
-    for (let j = 0; j < 10; j++) {
-      val_in_line.push({
-        x: j,
-        y: i,
-        containsShip: false,
-        shot: false,
-        isShipVisible: false,
-        shipId: null,
-      });
-
-      enemy_val_in_line.push({
-        x: j,
-        y: i,
-        containsShip: false,
-        shot: false,
-        isShipVisible: false,
-        shipId: null,
-      });
-    }
-
-    initial_myField.push(val_in_line);
-    initial_enemyField.push(enemy_val_in_line);
-  }
-
-    // расставляем стандартный набор кораблей
-    myShips.forEach((ship: any) => {
-      placeShip(initial_myField, ship)
-    });
-    enemyShips.forEach((ship0: any) => {
-      placeShip(initial_enemyField, ship0)
-    });
-
-
-  let my_grid = [];
-  let enemy_grid = [];
-
-  // Заполняем из наших массивов
-  let remaining_hit_points = 0;
-  for (let y = 0; y < 10; y++) {
-    let my_line = [];
-    let enemy_line = [];
-    for (let x = 0; x < 10; x++) {
-      // Наши корабли
-      let fieldVal = initial_myField[y][x];
-      let fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
-      if (fieldVal.containsShip)
-        fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
-      my_line.push(fieldVal_0);
-      // Корабли оппонента
-      fieldVal = initial_enemyField[y][x];
-      fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_WATER_HIT : Constants.GRID_VALUE_WATER;
-      if (fieldVal.containsShip) {
-        fieldVal_0 = fieldVal.shot ? Constants.GRID_VALUE_SHIP_HIT : Constants.GRID_VALUE_SHIP;
-        remaining_hit_points++;
-      }
-      enemy_line.push(fieldVal_0);
-    }
-
-    my_grid.push(my_line);
-    enemy_grid.push(enemy_line);
-
-  }
-
-  let initial_my_board = { grid: my_grid };
-  let initial_opponent_board = { grid: enemy_grid, remaining_hit_points};
-
-  return {
-    //notes: [],
-    my_board: initial_my_board,
-    myField: initial_myField,
-    opponent_board: initial_opponent_board,
-    enemyField: initial_enemyField
-  };
-
-}
-
-function getFullInitialState()
-{
-  let boardInitialState=getBoardInitialState();
-  let state={
-    my_board: boardInitialState.my_board,
-    myField: boardInitialState.myField,
-    opponent_board: boardInitialState.opponent_board,
-    enemyField: boardInitialState.enemyField,
-    character: 'sber',
-    respectfulAppeal: true, 
-    enemyTurn: false, gameOver: false, youWin: false,
-    showHidden: false
-  };
-  return state;
-}
 
 export const App: FC = memo(() => {
-  //const [appState, dispatch] = useReducer(reducer, { notes: [] });
+  const [appState, dispatch] = useReducer(reducer, initialState);
   //const [note, setNote] = useState("");
-  const [appState, setAppState] = useState(getFullInitialState());
+  //const [appState, setAppState] = useState(constFullInitialState);
 
   const assistantStateRef = useRef<AssistantAppState>();
   const assistantRef = useRef<ReturnType<typeof createAssistant>>();
 
   useEffect(() => {
 
+    dispatch({type: 'init'});
+
     assistantRef.current = initializeAssistant(() => assistantStateRef.current);
 
-    assistantRef.current.on("data", ({ action }: any) => {
+    assistantRef.current.on("data", ({ type, character, navigation, action }: any) => {
+      if (character)
+      {
+        // TODO брать respectfulAppeal из character
+        // 'sber' | 'eva' | 'joy';
+        //setAppState({...appState, character: character.id, respectfulAppeal: character.id!=='joy'});
+        dispatch({type: 'character', character_id: character.id});
+      }
       if (action) {
-        //dispatch(action);
+        dispatch(action);
       }
     });
   }, []);
@@ -248,17 +147,29 @@ export const App: FC = memo(() => {
   }, [appState]);
 
   useEffect(() => {
+    //assistantRef.current?.sendData({ action: { action_id: 'myMove'} });
+    if (appState.actionsToSend.length>0)
+    {
+      appState.actionsToSend.forEach(element => {
+        assistantRef.current?.sendData(element.Action);
+      });
+      dispatch({type: 'clear_action', id: '0'});
+    }
+  }, [appState.actionsToSend]);
+
+  useEffect(() => {
     if (appState.enemyTurn)
     {
       // TODO тест передаем ход игроку
-      setAppState({...appState, enemyTurn: false});
+      //setAppState({...appState, enemyTurn: false});
+      //setTimeout(() => processEnemyMove(), 1200);
     }
   }, [appState.enemyTurn]);
 
 
 
 
-
+/*
   // { type: "lets_fire", coord_str: codeCoordinate(x,y)})
   function myDispatch(myAction: any)
   {
@@ -541,9 +452,9 @@ export const App: FC = memo(() => {
           }
         }
         //if (playerLivesCount>0)
-          //setTimeout(() => processEnemyMove(), 1200);
+        //  setTimeout(() => processEnemyMove(), 1200);
         //else
-        if (playerLivesCount===0)
+        if (playerLivesCount<=0)
         {
           setAppState({...appState, gameOver: true, youWin: false});
           assistantRef.current?.sendData({ action: { action_id: 'gameOverLost', parameters: {} } });
@@ -555,7 +466,7 @@ export const App: FC = memo(() => {
     setAppState({...appState, enemyTurn: false});
   }
 
-
+  */
 
 
 
@@ -619,7 +530,7 @@ export const App: FC = memo(() => {
           //currentTurn={currentTurn}
           //onClickBoard={() => dispatch({ type: "add_note", note: "123" })}
           // TODO
-          onClickBoard={(x:any, y:any) => myDispatch({ type: "lets_fire", coord_str: codeCoordinate(x,y)})}
+          onClickBoard={(x:any, y:any) => dispatch({ type: "lets_fire", coord_str: codeCoordinate(x,y)})}
         />
         <p>Попаданий до победы: {remaining_hit_points}</p>
       </div>
