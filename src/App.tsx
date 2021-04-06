@@ -334,6 +334,15 @@ export class App extends React.Component<any, any> {
     if (myAction.type==='show_ships')
     {
       this.setState({...this.state, showHidden: true});
+      // Передача текущего состояния в смартап
+      if (this.assistantStateRef.current)
+      {
+        this.assistantStateRef.current.value.state={
+          //gameOver: this.state.gameOver
+          gameOver: true
+        };
+      }
+
     }
 
     if (myAction.type==='game_over_lost')
@@ -687,7 +696,6 @@ export class App extends React.Component<any, any> {
   }, []);
 
   // Здесь была передача текущего состояния в смартап
-  // (где оно там используется, я пока не увидел, да и не смотрел)
   useEffect(() => {
     assistantStateRef.current = {
       item_selector: {
