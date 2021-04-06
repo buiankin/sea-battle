@@ -115,8 +115,10 @@ function getFullInitialState()
     enemyField: boardInitialState.enemyField,
     character: 'sber',
     respectfulAppeal: true, 
+    enemyTurnForce: 0,
     enemyTurn: false, gameOver: false, youWin: false,
-    showHidden: false
+    // TODO false
+    showHidden: true
   };
   return state;
 }
@@ -126,9 +128,11 @@ const emptyRow=[Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constant
   Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER];
 const emptyGrid=[emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow];
 
+// важно - тот же самый тип должен быть у getFullInitialState()
 export const initialState = { actionsToSend: [], my_board: {grid: emptyGrid}, myField: [], opponent_board: {grid: emptyGrid, remaining_hit_points:0}, enemyField: [],
   character: 'sber',
   respectfulAppeal: true, 
+  enemyTurnForce: 0,
   enemyTurn: false, gameOver: false, youWin: false,
   showHidden: false
 };
@@ -158,7 +162,7 @@ type State = {
 
   character: string,
   respectfulAppeal: boolean, 
-  enemyTurn: boolean, gameOver: boolean, youWin: boolean,
+  enemyTurnForce: number, enemyTurn: boolean, gameOver: boolean, youWin: boolean,
   showHidden: boolean
 };
 
@@ -184,6 +188,10 @@ type Action =
     id: string;
     }
   | {
+    type: "enemy_fire";
+    coord_str: string;
+  }
+  | {
     type: "lets_fire";
     coord_str: string;
   };
@@ -204,6 +212,7 @@ type Action =
     */
 
 export const reducer = (state: State, action: Action) => {
+
   switch (action.type) {
       /*
     case "init":
@@ -334,6 +343,124 @@ export const reducer = (state: State, action: Action) => {
         actionsToSend: []
       }
 
+    case "enemy_fire":
+    {
+      let actionsToSend=state.actionsToSend.slice();
+
+      let fire_registered=false;
+      let coord=decodeCoordinate(action.coord_str);
+      if (coord)
+      {
+        let x=coord.x, y=coord.y;
+
+        let field=state.myField[y][x];
+        if (field.containsShip)
+        {
+          // Попали в корабль
+          if (!field.shot)
+          {
+            // До этого в это поле не попадали
+            fire_registered=true;
+            let newMyField=state.myField.slice();
+            newMyField[y]=newMyField[y].slice();
+            newMyField[y][x]={...newMyField[y][x], shot:true};
+            let shipId=field.shipId;
+            // Проверим, есть ли еще не подбитые его части
+            let live_parts=0;
+            for (let y = 0; y < 10; y++) {
+              for (let x = 0; x < 10; x++) {
+                if (newMyField[y][x].containsShip && newMyField[y][x].shipId===shipId)
+                {
+                  if (!newMyField[y][x].shot)
+                    live_parts++;
+                }
+              }
+            }
+            // TODO если корабль полностью подбит, рисовать его как-то по-другому
+        
+            let grid=state.my_board.grid.slice();
+            grid[y]=state.my_board.grid[y].slice();
+            grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
+            /*
+            if (live_parts>0)
+              actionsToSend.push({id:'0', Action: { action: { action_id: 'fireHit', parameters: { coord: action.coord_str} } }});
+            else
+              actionsToSend.push({id:'0', Action: { action: { action_id: 'fireDone', parameters: { coord: action.coord_str} } }});
+            */
+
+            // посчитаем, сколько у игрока осталось кораблей
+            let playerLivesCount=0;
+            for (let y = 0; y < 10; y++) {
+              for (let x = 0; x < 10; x++) {
+                // если туда еще не стреляли
+                if (!newMyField[y][x].shot&&newMyField[y][x].containsShip)
+                  playerLivesCount++;
+              }
+            }
+           
+            if (playerLivesCount>0)
+            {
+              // TODO еще один выстрел
+            //  setTimeout(() => processEnemyMove(), 1200);
+
+              // просто очередное попадание, ход не переходит
+              return {...state,
+                my_board: {grid: grid},
+                myField: newMyField,
+                actionsToSend: actionsToSend,
+                // а это сделано для того, чтобы вызвалась проверка enemyTurn
+                enemyTurnForce: state.enemyTurnForce+1
+                }
+  
+            } else
+            {
+              // Игра окончена
+              //setAppState({...appState, gameOver: true, youWin: false});
+              actionsToSend.push({id:'0', Action: { action: { action_id: 'gameOverLost', parameters: {} } }});
+              // игрок выиграл
+              return {...state,
+                my_board: {grid: grid},
+                myField: newMyField,
+                gameOver: true,
+                youWin: false,
+                actionsToSend: actionsToSend
+                }
+            }
+
+          } else {
+            // Повторное попадание. Ход считаем, что не переходит
+            //actionsToSend.push({id:'0', Action: { action: { action_id: 'fireAgain', parameters: { coord: action.coord_str} } }});
+          }
+        } else {
+          // Попали в воду
+          let grid=state.my_board.grid.slice();
+          grid[y]=state.my_board.grid[y].slice();
+          if (grid[y][x] === Constants.GRID_VALUE_WATER)
+          {
+            // До этого туда не стреляли
+            fire_registered=true;
+            // хотя это бы и не обязательно делать (заполнять enemyField для воды), все равно попадание у нас контролируется по-другому,
+            // но для корректности данных лучше так сделать
+            let newMyField=state.myField.slice();
+            newMyField[y]=newMyField[y].slice();
+            newMyField[y][x]={...newMyField[y][x], shot:true};
+            //
+            grid[y][x] = Constants.GRID_VALUE_WATER_HIT;
+            //this.setState({ enemyField: newEnemyField, opponent_board: { ...this.state.opponent_board, grid: grid} });
+            return {...state,
+              my_board: { ...state.my_board, grid: grid}, myField: newMyField,
+              enemyTurn: false
+            }
+          }
+          //actionsToSend.push({id:'0', Action: { action: { action_id: 'fireMiss', parameters: { coord: action.coord_str} } }});
+        }
+      }
+  
+      return {
+        ...state
+      }
+    }
+
     case "lets_fire":
     {
       let actionsToSend=state.actionsToSend.slice();
@@ -342,6 +469,13 @@ export const reducer = (state: State, action: Action) => {
         // тут про сессии можно почитать
         // https://developer.sberdevices.ru/docs/ru/developer_tools/ide/JS_API/session_lifetime_control
         actionsToSend.push({id:'0', Action: { action: { action_id: 'myMove'} }});
+        // и на всякий случай защита от зависания таймера
+        return {
+          ...state,
+          actionsToSend: actionsToSend,
+          enemyTurnForce: state.enemyTurnForce+1
+        }
+        
       } else
       {
         //alert(myAction.coord_str);
@@ -360,7 +494,8 @@ export const reducer = (state: State, action: Action) => {
               // До этого в это поле не попадали
               fire_registered=true;
               let newEnemyField=state.enemyField.slice();
-              newEnemyField[y][x].shot=true;
+              newEnemyField[y]=newEnemyField[y].slice();
+              newEnemyField[y][x]={...newEnemyField[y][x], shot:true};
               let shipId=field.shipId;
               // Проверим, есть ли еще не подбитые его части
               let live_parts=0;
@@ -376,6 +511,7 @@ export const reducer = (state: State, action: Action) => {
               // TODO если корабль полностью подбит, рисовать его как-то по-другому
           
               let grid=state.opponent_board.grid.slice();
+              grid[y]=state.opponent_board.grid[y].slice();
               grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
               if (live_parts>0)
                 actionsToSend.push({id:'0', Action: { action: { action_id: 'fireHit', parameters: { coord: action.coord_str} } }});
@@ -408,6 +544,7 @@ export const reducer = (state: State, action: Action) => {
           } else {
             // Попали в воду
             let grid=state.opponent_board.grid.slice();
+            grid[y]=state.opponent_board.grid[y].slice();
             if (grid[y][x] === Constants.GRID_VALUE_WATER)
             {
               // До этого туда не стреляли
@@ -415,21 +552,23 @@ export const reducer = (state: State, action: Action) => {
               // хотя это бы и не обязательно делать (заполнять enemyField для воды), все равно попадание у нас контролируется по-другому,
               // но для корректности данных лучше так сделать
               let newEnemyField=state.enemyField.slice();
-              newEnemyField[y][x].shot=true;
+              newEnemyField[y]=newEnemyField[y].slice();
+              newEnemyField[y][x]={...newEnemyField[y][x], shot:true};
               //
               grid[y][x] = Constants.GRID_VALUE_WATER_HIT;
               //this.setState({ enemyField: newEnemyField, opponent_board: { ...this.state.opponent_board, grid: grid} });
+              actionsToSend.push({id:'0', Action: { action: { action_id: 'fireMiss', parameters: { coord: action.coord_str} } }});
+
               return {...state,
                 opponent_board: { ...state.opponent_board, grid: grid}, enemyField: newEnemyField,
                 enemyTurn: true
               }
             }
-            actionsToSend.push({id:'0', Action: { action: { action_id: 'fireMiss', parameters: { coord: action.coord_str} } }});
           }
         }
       }
       return {
-        ...state,     
+        ...state,
         actionsToSend: actionsToSend
       }
     }

@@ -118,6 +118,8 @@ export const App: FC = memo(() => {
     assistantRef.current = initializeAssistant(() => assistantStateRef.current);
 
     assistantRef.current.on("data", ({ type, character, navigation, action }: any) => {
+      // Из-за того, что React.Strict несмотря на то, что вызов я делаю 1 раз, dispatch срабатывае дважды
+      // поэтому сделаем счетчик
       if (character)
       {
         // TODO брать respectfulAppeal из character
@@ -125,6 +127,7 @@ export const App: FC = memo(() => {
         //setAppState({...appState, character: character.id, respectfulAppeal: character.id!=='joy'});
         dispatch({type: 'character', character_id: character.id});
       }
+      // Где-то он и без меня вызывается, поэтому здесь убрал
       if (action) {
         dispatch(action);
       }
@@ -144,7 +147,7 @@ export const App: FC = memo(() => {
       },
         */
     };
-  }, [appState]);
+  }, [appState.gameOver]);
 
   useEffect(() => {
     //assistantRef.current?.sendData({ action: { action_id: 'myMove'} });
@@ -162,9 +165,9 @@ export const App: FC = memo(() => {
     {
       // TODO тест передаем ход игроку
       //setAppState({...appState, enemyTurn: false});
-      //setTimeout(() => processEnemyMove(), 1200);
+      setTimeout(() => processEnemyMove(), 1200);
     }
-  }, [appState.enemyTurn]);
+  }, [appState.enemyTurn, appState.enemyTurnForce]);
 
 
 
@@ -353,6 +356,7 @@ export const App: FC = memo(() => {
     return false;
 
   }
+  */
 
   function processEnemyMove()
   {
@@ -435,11 +439,7 @@ export const App: FC = memo(() => {
 
       let alphabetical_coord=codeCoordinate(fire_coord.x, fire_coord.y);
 
-      //
-      //let messages2 = [...this.state.messages];
-      //messages2.push({text: alphabetical_coord, mine: false});
-      //this.setState({messages: messages2});
-
+      /*
       if (fireMyBoard(alphabetical_coord))
       {
         // если попал, проверяем, победа это или запускаем следующий ход оппонента
@@ -456,20 +456,17 @@ export const App: FC = memo(() => {
         //else
         if (playerLivesCount<=0)
         {
-          setAppState({...appState, gameOver: true, youWin: false});
+          //setAppState({...appState, gameOver: true, youWin: false});
           assistantRef.current?.sendData({ action: { action_id: 'gameOverLost', parameters: {} } });
         }
         return;
       }
+      */
+     dispatch({ type: "enemy_fire", coord_str: alphabetical_coord});
     }
     // В остальных случаях ход переходит к игроку
-    setAppState({...appState, enemyTurn: false});
+    //setAppState({...appState, enemyTurn: false});
   }
-
-  */
-
-
-
 
 
 
