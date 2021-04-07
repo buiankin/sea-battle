@@ -117,8 +117,8 @@ function getFullInitialState()
     respectfulAppeal: true, 
     enemyTurnForce: 0,
     enemyTurn: false, gameOver: false, youWin: false,
-    // TODO false
-    showHidden: true
+    // TODO true, если надо сразу видеть
+    showHidden: false
   };
   return state;
 }
@@ -381,12 +381,10 @@ export const reducer = (state: State, action: Action) => {
             let grid=state.my_board.grid.slice();
             grid[y]=state.my_board.grid[y].slice();
             grid[y][x] = Constants.GRID_VALUE_SHIP_HIT;
-            /*
             if (live_parts>0)
-              actionsToSend.push({id:'0', Action: { action: { action_id: 'fireHit', parameters: { coord: action.coord_str} } }});
+              actionsToSend.push({id:'0', Action: { action: { action_id: 'enemy_fire_hit', parameters: { coord: action.coord_str} } }});
             else
-              actionsToSend.push({id:'0', Action: { action: { action_id: 'fireDone', parameters: { coord: action.coord_str} } }});
-            */
+              actionsToSend.push({id:'0', Action: { action: { action_id: 'enemy_fire_down', parameters: { coord: action.coord_str} } }});
 
             // посчитаем, сколько у игрока осталось кораблей
             let playerLivesCount=0;
@@ -432,6 +430,7 @@ export const reducer = (state: State, action: Action) => {
             //actionsToSend.push({id:'0', Action: { action: { action_id: 'fireAgain', parameters: { coord: action.coord_str} } }});
           }
         } else {
+          actionsToSend.push({id:'0', Action: { action: { action_id: 'enemy_fire_miss', parameters: { coord: action.coord_str} } }});
           // Попали в воду
           let grid=state.my_board.grid.slice();
           grid[y]=state.my_board.grid[y].slice();
@@ -449,15 +448,16 @@ export const reducer = (state: State, action: Action) => {
             //this.setState({ enemyField: newEnemyField, opponent_board: { ...this.state.opponent_board, grid: grid} });
             return {...state,
               my_board: { ...state.my_board, grid: grid}, myField: newMyField,
-              enemyTurn: false
+              enemyTurn: false,
+              actionsToSend: actionsToSend
             }
           }
-          //actionsToSend.push({id:'0', Action: { action: { action_id: 'fireMiss', parameters: { coord: action.coord_str} } }});
         }
       }
   
       return {
-        ...state
+        ...state,
+        actionsToSend: actionsToSend
       }
     }
 
@@ -560,6 +560,7 @@ export const reducer = (state: State, action: Action) => {
               actionsToSend.push({id:'0', Action: { action: { action_id: 'fireMiss', parameters: { coord: action.coord_str} } }});
 
               return {...state,
+                actionsToSend: actionsToSend,
                 opponent_board: { ...state.opponent_board, grid: grid}, enemyField: newEnemyField,
                 enemyTurn: true
               }
