@@ -94,12 +94,12 @@ function getBoardInitialState()
 
   return {
     //notes: [],
-    actionsToSend: [],
 
     my_board: initial_my_board,
     myField: initial_myField,
     opponent_board: initial_opponent_board,
     enemyField: initial_enemyField
+    
   };
 
 }
@@ -109,6 +109,9 @@ function getFullInitialState()
   let boardInitialState=getBoardInitialState();
   let state={
     actionsToSend: [],
+    debugLastUserTalkCoord: "",
+
+
     my_board: boardInitialState.my_board,
     myField: boardInitialState.myField,
     opponent_board: boardInitialState.opponent_board,
@@ -129,7 +132,7 @@ const emptyRow=[Constants.GRID_VALUE_WATER, Constants.GRID_VALUE_WATER, Constant
 const emptyGrid=[emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow,emptyRow];
 
 // важно - тот же самый тип должен быть у getFullInitialState()
-export const initialState = { actionsToSend: [], my_board: {grid: emptyGrid}, myField: [], opponent_board: {grid: emptyGrid, remaining_hit_points:0}, enemyField: [],
+export const initialState = { actionsToSend: [], debugLastUserTalkCoord: "", my_board: {grid: emptyGrid}, myField: [], opponent_board: {grid: emptyGrid, remaining_hit_points:0}, enemyField: [],
   character: 'sber',
   respectfulAppeal: true, 
   enemyTurnForce: 0,
@@ -154,6 +157,7 @@ type ActionToSend = {
 type State = {
   //notes: Array<Note>;
   actionsToSend: Array<ActionToSend>,
+  debugLastUserTalkCoord: string,
 
   my_board: { grid: string[][]},
   myField: any[],
@@ -533,7 +537,8 @@ export const reducer = (state: State, action: Action) => {
                 return {...state,
                 opponent_board: {grid: grid, remaining_hit_points: state.opponent_board.remaining_hit_points-1},
                 enemyField: newEnemyField,
-                actionsToSend: actionsToSend
+                actionsToSend: actionsToSend,
+                debugLastUserTalkCoord: action.coord_str                
                 }
               }
   
@@ -561,6 +566,7 @@ export const reducer = (state: State, action: Action) => {
 
               return {...state,
                 actionsToSend: actionsToSend,
+                debugLastUserTalkCoord: action.coord_str,
                 opponent_board: { ...state.opponent_board, grid: grid}, enemyField: newEnemyField,
                 enemyTurn: true
               }
@@ -570,7 +576,8 @@ export const reducer = (state: State, action: Action) => {
       }
       return {
         ...state,
-        actionsToSend: actionsToSend
+        actionsToSend: actionsToSend,
+        debugLastUserTalkCoord: action.coord_str
       }
     }
       

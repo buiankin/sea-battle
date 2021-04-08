@@ -21,8 +21,12 @@ export function codeCoordinate(x, y)
 export function decodeCoordinate(s)
 {
   let result=null;
+
+  //s=String.fromCodePoint(1072,1072,32,1086,1076,1080,1085);
+
+  //s=s.replaceAll("1", " ОДИН ");
+
   let y=-1;
-  // И сразу добавим пробелы по краям, чтобы можно было найти числа, произнесенные голосом
   let s2=s.replaceAll("-", " ").toUpperCase();
   const digits_alphabetical=['ОДИН', 'ДВА', 'ТРИ', 'ЧЕТЫРЕ', 'ПЯТЬ', 'ШЕСТЬ', 'СЕМЬ', 'ВОСЕМЬ', 'ДЕВЯТЬ', 'ДЕСЯТЬ'];
   for (let i=0; i<digits_alphabetical.length; i++)
@@ -89,5 +93,9 @@ export function decodeCoordinate(s)
         break;
     }
   }
+  //return result;
+
+  result={x:3, y:2};
   return result;
+
 }

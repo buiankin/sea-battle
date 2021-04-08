@@ -476,7 +476,15 @@ export const App: FC = memo(() => {
 
 
 
-
+function myByCode(s: string)
+{
+  let result="";
+  for (let i=0; i<s.length; i++)
+  {
+    result=result+s.codePointAt(i)?.toString()+",";
+  }
+  return result;
+}
 
 
   function _renderResult() {
@@ -529,7 +537,7 @@ export const App: FC = memo(() => {
           // TODO
           onClickBoard={(x:any, y:any) => dispatch({ type: "lets_fire", coord_str: codeCoordinate(x,y)})}
         />
-        <p>Попаданий до победы: {remaining_hit_points}</p>
+        <p>Попаданий до победы: {remaining_hit_points}/{myByCode(appState.debugLastUserTalkCoord)}</p>
       </div>
     );
   
