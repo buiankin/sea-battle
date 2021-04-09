@@ -483,6 +483,67 @@ export const App: FC = memo(() => {
     {
       // Координаты выстрела
       let fire_coord=primary_targets.length>0?primary_targets[getRandomInt(0, primary_targets.length-1)]:targets[getRandomInt(0, targets.length-1)];
+      // Фикс от 09.04.2021, учитывающий, что корабли стоят в одну линию
+      // TODO должен знать максимальную возможную длину оставшихся кораблей
+      let max_len=4;
+      let mega_primary=[];
+      primary_targets.forEach(element => {
+        for (let dir=0; dir<1; dir++)
+        {
+          // это смещение влево (dir=0) или вверх (dir=1)
+          for (let i=-max_len+1; i<max_len; i++)
+          {
+            let count=0;
+            let shipId=0;
+            // это индекс элемента
+            for (let j=0; j<max_len; j++)
+            {
+              let x=element.x;
+              let y=element.y;
+              if (dir===0)
+              {
+                x+=i+j;
+              } else
+              {
+                y+=i+j;
+              }
+              // первый элемент должен быть подбитым кораблем
+              let myField=appState.myField[y][x];
+              if (j==0)
+              {
+                // в пределах поля
+                if (x>=0&&x<=9&&y>=0&&y<=9)
+                  if (myField.shot&&myField.containsShip)
+                    shipId=myField.shipId;
+                  else
+                    break;
+                else
+                  break;
+              }
+              // в пределах поля
+              if (x>=0&&x<=9&&y>=0&&y<=9)
+              // и корабль тот же (хотя это не совсем честно, но человек бы смог бы так же догадаться, что корабли разные
+              // зная, что один из них подбит, например
+              if (myField.shot&&myField.containsShip&&shipId===myField.shipId)
+                count++;
+            }
+            if (count>=2)
+            {
+              //mega_primary.push({x:element.x, y:element.y});
+              mega_primary.push({y:1, x:1});
+              // Один раз добавим эту координату и все
+              // (но может добавиться и по двум направлениям, что просто увеличит вероятность выпадения
+              // этой координаты - не страшно)
+              break;
+            }
+
+          }
+        }
+      });
+
+      if (mega_primary.length>0)
+        fire_coord=mega_primary[getRandomInt(0, mega_primary.length-1)];
+      //
 
       let alphabetical_coord=codeCoordinateNames(fire_coord.x, fire_coord.y);
 
