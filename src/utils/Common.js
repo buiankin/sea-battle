@@ -1,5 +1,5 @@
 
-import { letters } from '../constants/messages';
+import { letters, letters_names } from '../constants/messages';
 
 
 export function getRandomArbitrary(min, max) {
@@ -17,24 +17,32 @@ export function codeCoordinate(x, y)
   return letters[x]+(y+1);
 }
 
+export function codeCoordinateNames(x, y)
+{
+  return letters_names[x]+" "+(y+1);
+}
+
+
 
 export function decodeCoordinate(s)
 {
   let result=null;
 
   //s=String.fromCodePoint(1072,1072,32,1086,1076,1080,1085);
+  //result={x:3, y:2};
+  //return result;
 
   //s=s.replaceAll("1", " ОДИН ");
 
   let y=-1;
-  let s2=s.replaceAll("-", " ").toUpperCase();
+  let s2=s.replace("-", " ").toUpperCase();
   const digits_alphabetical=['ОДИН', 'ДВА', 'ТРИ', 'ЧЕТЫРЕ', 'ПЯТЬ', 'ШЕСТЬ', 'СЕМЬ', 'ВОСЕМЬ', 'ДЕВЯТЬ', 'ДЕСЯТЬ'];
   for (let i=0; i<digits_alphabetical.length; i++)
   {
     s2=s2.replace(digits_alphabetical[i], (i+1).toString());
   }
 
-  s2=s2.replaceAll(" ", "");
+  s2=s2.replace(/ /g, "");
 
   // 08.04.2021
   // все, что не на первом и не на последнем месте и не цифра, заменяем на пробел
@@ -48,7 +56,7 @@ export function decodeCoordinate(s)
   }
   //
 
-  s2=s2.replaceAll(" ", "");
+  s2=s2.replace(/ /g, "");
 
   if (s2.length===3&&s2.substring(1)==="10")
   {
@@ -79,6 +87,9 @@ export function decodeCoordinate(s)
       case 'Е':
         result={x:5, y:y};
         break;
+      case 'Э': // это так бот говорит букву Е - Эхо
+        result={x:5, y:y};
+        break;
       case 'Ж':
         result={x:6, y:y};
         break;
@@ -93,9 +104,6 @@ export function decodeCoordinate(s)
         break;
     }
   }
-  //return result;
-
-  result={x:3, y:2};
   return result;
 
 }

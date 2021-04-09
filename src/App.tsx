@@ -12,6 +12,7 @@ import React, {
 import {
   createSmartappDebugger,
   createAssistant,
+  createRecordPlayer,
   AssistantAppState,
   AssistantSmartAppData,
   AssistantCharacterType
@@ -32,7 +33,7 @@ import placeVarious from './utils/standardShipsSet';
 // Это не обязательно, т.к. все в в index на самом деле
 //import './App.css';
 
-import { getRandomInt, codeCoordinate, decodeCoordinate} from './utils/Common';
+import { getRandomInt, codeCoordinate, codeCoordinateNames, decodeCoordinate} from './utils/Common';
 import { initialState, reducer } from "./store";
 
 // createGlobalStyle нужен для создания глобальных стилей
@@ -117,9 +118,14 @@ export const App: FC = memo(() => {
 
     assistantRef.current = initializeAssistant(() => assistantStateRef.current);
 
-    assistantRef.current.on("data", ({ type, character, navigation, action }: any) => {
+    //assistantRef.current.on("start", () => {
+    //  alert("Start!");
+    //});
+
+    assistantRef.current.on("data", ({ type, character, navigation, action, insets }: any) => {
       // Из-за того, что React.Strict несмотря на то, что вызов я делаю 1 раз, dispatch срабатывае дважды
       // поэтому сделаем счетчик
+      // AssistantCharacterCommand
       if (character)
       {
         // TODO брать respectfulAppeal из character
@@ -127,11 +133,19 @@ export const App: FC = memo(() => {
         //setAppState({...appState, character: character.id, respectfulAppeal: character.id!=='joy'});
         dispatch({type: 'character', character_id: character.id});
       }
-      // Где-то он и без меня вызывается, поэтому здесь убрал
+      // AssistantServerAction
       if (action) {
         dispatch(action);
       }
+      // AssistantInsetsCommand - команда, которая сообщает смартапу о том, что поверх него будет отображен нативный UI и его размеры.
+      if (insets)
+      {
+        //alert("left="+insets.left+", top="+insets.top+", right="+insets.right+", bottom="+insets.bottom);
+      }
     });
+
+
+
   }, []);
 
   useEffect(() => {
@@ -151,10 +165,42 @@ export const App: FC = memo(() => {
 
   useEffect(() => {
     //assistantRef.current?.sendData({ action: { action_id: 'myMove'} });
+
     if (appState.actionsToSend.length>0)
     {
       appState.actionsToSend.forEach(element => {
         assistantRef.current?.sendData(element.Action);
+
+        //alert('Сообщение');
+
+        /*
+        const unsubscribe = assistantRef.current?.sendAction(
+          { type: 'some_action_name', payload: { param: 'some' } },
+          (data: { type: string; payload: Record<string, unknown> }) => {
+              // здесь обработка данных, переданных от бэкенд
+              if (unsubscribe)
+                unsubscribe();
+          },
+          (error: { code: number; description: string }) => {
+              // обработка ошибки, переданной от бэкенд
+          });        
+        */
+       /*
+        const unsubscribe = assistantRef.current?.sendAction(
+          element.Action.action,
+          (data: { type: string; payload: Record<string, unknown> }) => {
+            //if (data.type === 'smart_app_data' && data.smart_app_data?.type === 'lets_fire') {
+              // здесь обработка данных, переданных от бэкенд
+              alert("res1");
+              if (unsubscribe)
+                unsubscribe();
+          },
+          (error: { code: number; description: string }) => {
+              // обработка ошибки, переданной от бэкенд
+              alert("error!");
+          });
+          */
+
       });
       dispatch({type: 'clear_action', id: '0'});
     }
@@ -165,7 +211,8 @@ export const App: FC = memo(() => {
     {
       // TODO тест передаем ход игроку
       //setAppState({...appState, enemyTurn: false});
-      setTimeout(() => processEnemyMove(), 1200);
+      // Чтобы успел сказать предыдущую фразу, бот делает ход раз в 3 секунды
+      setTimeout(() => processEnemyMove(), 3100);
     }
   }, [appState.enemyTurn, appState.enemyTurnForce]);
 
@@ -292,7 +339,7 @@ export const App: FC = memo(() => {
 
       // Теперь он сам стреляет
       // (сделано специально, чтобы в любом случае произошла проверка, чтобы игровой процесс не остановился по какой-нибудь причине)
-      //setTimeout(() => processEnemyMove(), 1200);
+      //setTimeout(() => processEnemyMove(), 3100);
 
     }
   }
@@ -437,7 +484,7 @@ export const App: FC = memo(() => {
       // Координаты выстрела
       let fire_coord=primary_targets.length>0?primary_targets[getRandomInt(0, primary_targets.length-1)]:targets[getRandomInt(0, targets.length-1)];
 
-      let alphabetical_coord=codeCoordinate(fire_coord.x, fire_coord.y);
+      let alphabetical_coord=codeCoordinateNames(fire_coord.x, fire_coord.y);
 
       /*
       if (fireMyBoard(alphabetical_coord))
@@ -452,7 +499,7 @@ export const App: FC = memo(() => {
           }
         }
         //if (playerLivesCount>0)
-        //  setTimeout(() => processEnemyMove(), 1200);
+        //  setTimeout(() => processEnemyMove(), 3100);
         //else
         if (playerLivesCount<=0)
         {
@@ -537,7 +584,7 @@ function myByCode(s: string)
           // TODO
           onClickBoard={(x:any, y:any) => dispatch({ type: "lets_fire", coord_str: codeCoordinate(x,y)})}
         />
-        <p>Попаданий до победы: {remaining_hit_points}/{myByCode(appState.debugLastUserTalkCoord)}</p>
+        <p>Попаданий до победы: {remaining_hit_points}{/*/{myByCode(appState.debugLastUserTalkCoord)}*/}</p>
       </div>
     );
   

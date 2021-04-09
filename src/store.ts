@@ -403,7 +403,7 @@ export const reducer = (state: State, action: Action) => {
             if (playerLivesCount>0)
             {
               // TODO еще один выстрел
-            //  setTimeout(() => processEnemyMove(), 1200);
+            //  setTimeout(() => processEnemyMove(), 3100);
 
               // просто очередное попадание, ход не переходит
               return {...state,
