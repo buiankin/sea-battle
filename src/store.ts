@@ -570,7 +570,7 @@ export const reducer = (state: State, action: Action) => {
                 opponent_board: { ...state.opponent_board, grid: grid}, enemyField: newEnemyField,
                 enemyTurn: true
               }
-            }
+            } else actionsToSend.push({id:'0', Action: { action: { action_id: 'fireAgain', parameters: { coord: action.coord_str} } }});
           }
         }
       }

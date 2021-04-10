@@ -206,7 +206,13 @@ body {
   /*color: #362b42;*/
   color: var(--test_color);
   text-align: left;
-  font-size: var(--h1_font);
+
+  display: block;
+  font-size: var(--h2_font);
+  margin-block-start: 0.083em;
+  margin-block-end: 0.083em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
 
 }
 
@@ -219,6 +225,12 @@ body {
 #game_show #boards_container #opponents_board_container p {
   text-align: right;
   font-size: var(--h2_font);
+
+  margin-block-start: 0.083em;
+  margin-block-end: 0.083em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+
 }
 
 /*  max-width: 50%; */
@@ -244,15 +256,13 @@ body {
 #game_show #boards_container #my_board_container header h2 {
   /*color: #362b42;*/
   text-align: left;
-  font-size: var(--h1_font);
-  /*
+
   display: block;
-  font-size: var(--h1_font);
+  font-size: var(--h2_font);
   margin-block-start: 0.083em;
   margin-block-end: 0.083em;
   margin-inline-start: 0px;
   margin-inline-end: 0px;
-  */
 }
 
 
@@ -427,17 +437,17 @@ body {
 }
 
 #game_result h1 {
-  font-size: 3em;
+  font-size: 2em;
   line-height: 1.3em;
   color: #362b42;
   
 }
 
 #game_result p {
-  font-size: 1.5em;
-  line-height: 1.5em;
+  font-size: 1.2em;
+  line-height: 1.2em;
   color: #cfc4db;
-  margin-bottom: 1.5em;
+  margin-bottom: 1.2em;
 }
 
 /* .grid-1, .grid-2 {

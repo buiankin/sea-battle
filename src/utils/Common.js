@@ -32,14 +32,24 @@ export function decodeCoordinate(s)
   //result={x:3, y:2};
   //return result;
 
+  //s="Валера восемь";
   //s=s.replaceAll("1", " ОДИН ");
 
   let y=-1;
   let s2=s.replace("-", " ").toUpperCase();
-  const digits_alphabetical=['ОДИН', 'ДВА', 'ТРИ', 'ЧЕТЫРЕ', 'ПЯТЬ', 'ШЕСТЬ', 'СЕМЬ', 'ВОСЕМЬ', 'ДЕВЯТЬ', 'ДЕСЯТЬ'];
+  const digits_alphabetical=[{idx: 1, s:'ОДИН'}, {idx: 2, s:'ДВА'}, {idx: 4, s:'ЧЕТЫРЕ'}, {idx: 5, s:'ПЯТЬ'},
+   {idx: 6, s:'ШЕСТЬ'}, {idx: 8, s:'ВОСЕМЬ'}, {idx: 7, s:'СЕМЬ'}, {idx: 9, s:'ДЕВЯТЬ'}, {idx: 10, s:'ДЕСЯТЬ'}, 
+   // Три идет последним, на случай если сказали Дмитрий
+   {idx: 3, s:'ТРИ'}];
   for (let i=0; i<digits_alphabetical.length; i++)
   {
-    s2=s2.replace(digits_alphabetical[i], (i+1).toString());
+    //s2=s2.replace(digits_alphabetical[i], (i+1).toString());
+    let idx=s2.lastIndexOf(digits_alphabetical[i].s);
+    if (idx>=0)
+    {
+      s2 = s2.substring(0, idx) + (digits_alphabetical[i].idx).toString() + s2.substring(idx + digits_alphabetical[i].s.length);
+      break;
+    }
   }
 
   s2=s2.replace(/ /g, "");

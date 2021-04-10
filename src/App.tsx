@@ -478,6 +478,7 @@ export const App: FC = memo(() => {
         }
       }
     }
+
     // На всякий случай проверка, что есть куда выстрелить (по идее в этом случае игра уже закончена)
     if (targets.length>0)
     {
@@ -486,9 +487,9 @@ export const App: FC = memo(() => {
       // Фикс от 09.04.2021, учитывающий, что корабли стоят в одну линию
       // TODO должен знать максимальную возможную длину оставшихся кораблей
       let max_len=4;
-      let mega_primary=[];
+      let mega_primary: { y: number; x: number; }[]=[];
       primary_targets.forEach(element => {
-        for (let dir=0; dir<1; dir++)
+        for (let dir=0; dir<2; dir++)
         {
           // это смещение влево (dir=0) или вверх (dir=1)
           for (let i=-max_len+1; i<max_len; i++)
@@ -508,29 +509,33 @@ export const App: FC = memo(() => {
                 y+=i+j;
               }
               // первый элемент должен быть подбитым кораблем
-              let myField=appState.myField[y][x];
               if (j==0)
               {
                 // в пределах поля
                 if (x>=0&&x<=9&&y>=0&&y<=9)
+                {              
+                  let myField=appState.myField[y][x];
                   if (myField.shot&&myField.containsShip)
                     shipId=myField.shipId;
                   else
                     break;
+                }
                 else
                   break;
               }
               // в пределах поля
               if (x>=0&&x<=9&&y>=0&&y<=9)
-              // и корабль тот же (хотя это не совсем честно, но человек бы смог бы так же догадаться, что корабли разные
-              // зная, что один из них подбит, например
-              if (myField.shot&&myField.containsShip&&shipId===myField.shipId)
-                count++;
+              {
+                let myField=appState.myField[y][x];
+                // и корабль тот же (хотя это не совсем честно, но человек бы смог бы так же догадаться, что корабли разные
+                // зная, что один из них подбит, например
+                if (myField.shot&&myField.containsShip&&shipId===myField.shipId)
+                  count++;
+              }
             }
             if (count>=2)
             {
-              //mega_primary.push({x:element.x, y:element.y});
-              mega_primary.push({y:1, x:1});
+              mega_primary.push({x:element.x, y:element.y});
               // Один раз добавим эту координату и все
               // (но может добавиться и по двум направлениям, что просто увеличит вероятность выпадения
               // этой координаты - не страшно)
@@ -542,10 +547,13 @@ export const App: FC = memo(() => {
       });
 
       if (mega_primary.length>0)
+      {
         fire_coord=mega_primary[getRandomInt(0, mega_primary.length-1)];
+      }
       //
 
       let alphabetical_coord=codeCoordinateNames(fire_coord.x, fire_coord.y);
+
 
       /*
       if (fireMyBoard(alphabetical_coord))
@@ -658,15 +666,6 @@ function myByCode(s: string)
   
     return (
       <section id="main_section">
-        {
-          <Header
-          //game={GameShowView}
-          //playerId={playerId}
-          enemyTurn={appState.enemyTurn}
-          respectfulAppeal={appState.respectfulAppeal}
-          >
-          </Header>
-        }
         <section id="boards_container">
           <div id="my_board_container">
             <header><h2>Свои корабли</h2></header>
@@ -681,6 +680,15 @@ function myByCode(s: string)
             _renderOpponentBoard()
           }
         </section>
+        {
+          <Header
+          //game={GameShowView}
+          //playerId={playerId}
+          enemyTurn={appState.enemyTurn}
+          respectfulAppeal={appState.respectfulAppeal}
+          >
+          </Header>
+        }
       </section>
     );
   
